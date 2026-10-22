@@ -1,0 +1,39 @@
+from enum import StrEnum
+from typing import Literal
+from pydantic import BaseModel, Field
+
+class Objective(StrEnum):
+    awareness = "awareness"
+    engagement = "engagement"
+    conversion = "conversion"
+
+WEIGHTS = {
+    Objective.awareness: {"relevance": 0.25, "performance": 0.45, "audience": 0.15, "credibility": 0.15},
+    Objective.engagement: {"relevance": 0.35, "performance": 0.30, "audience": 0.20, "credibility": 0.15},
+    Objective.conversion: {"relevance": 0.30, "performance": 0.20, "audience": 0.35, "credibility": 0.15},
+}
+
+Basis = Literal["measured", "inferred"]
+
+class Metric(BaseModel):
+    value: float = Field(ge=0, le=1)
+    basis: Basis
+    
+class ScoreBreakdown(BaseModel):
+    relevance: Metric
+    performance: Metric
+    audience: Metric
+    credibility: Metric
+    total: float = Field(ge=0, le=1)
+    
+class FlagType(StrEnum):
+    inactive = "inactive"
+    brand_safety = "brand_safety"
+    competitor_mention = "competitor_mention"
+    self_declared_expertise = "self_declared_expertise"
+    high_sponsored_ratio = "high_sponsored_ratio"
+
+
+class Flag(BaseModel):
+    type: FlagType
+    detail: str
