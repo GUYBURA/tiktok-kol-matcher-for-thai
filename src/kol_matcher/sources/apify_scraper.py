@@ -1,5 +1,5 @@
 import threading
-from datetime import datetime
+from datetime import UTC, datetime
 from decimal import Decimal
 
 from apify_client import ApifyClient
@@ -158,5 +158,5 @@ def parse_creator(item: dict) -> Creator:
         followers=followers,
         tier=tier_for(followers),
         profile_url=author.get("profileUrl") or f"https://www.tiktok.com/@{author['name']}",
-        scraped_at=datetime.now(),
+        scraped_at=datetime.now(UTC),
     )

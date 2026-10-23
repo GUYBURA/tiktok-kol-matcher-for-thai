@@ -101,3 +101,16 @@ def _features(e: EnrichedCreator, themes, theme_vecs, caption_vec, comment_texts
         sponsored_ratio=sum(v.is_ad for v in videos) / len(videos),
         comment_stats=comment_stats(comment_texts) if comment_texts is not None else None,
     )
+
+
+def evidence_clips(con, settings, profile: BrandProfile, e: EnrichedCreator, k: int = 3
+                   ) -> list[tuple[Video, float]]:
+    """The creator's k clips closest to any brand theme, best first (embeddings come from the cache)."""
+    captioned = [v for v in e.videos if v.caption.strip()]
+    if not captioned:
+        return []
+    themes = profile.content_themes
+    vectors = embeddings.embed(con, settings, themes + [v.caption for v in captioned])
+    best = (vectors[len(themes):] @ vectors[: len(themes)].T).max(axis=1)
+    order = sorted(range(len(captioned)), key=lambda i: (-best[i], captioned[i].id))
+    return [(captioned[i], round(float(best[i]), 3)) for i in order[:k]]

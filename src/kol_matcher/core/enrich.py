@@ -89,15 +89,15 @@ def _store(con, settings, enriched: EnrichedCreator) -> None:
         """INSERT INTO creator_snapshots
            SELECT ?, ?, ?, ? WHERE NOT EXISTS (
                SELECT 1 FROM creator_snapshots WHERE handle = ? AND followers = ? AND scraped_at > ?)""",
-        [c.handle, c.scraped_at, c.followers, c.tier.value,
-         c.handle, c.followers, c.scraped_at - timedelta(hours=settings.cache_ttl_hours)],
+        [c.handle, _naive_utc(c.scraped_at), c.followers, c.tier.value,
+         c.handle, c.followers, _naive_utc(c.scraped_at) - timedelta(hours=settings.cache_ttl_hours)],
     )
     con.executemany(
         """INSERT OR REPLACE INTO videos
            (id, handle, url, caption, created_at, views, likes, comments, shares, saves, is_ad, scraped_at)
            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
         [[v.id, c.handle, v.url, v.caption, _naive_utc(v.created_at), v.views, v.likes, v.comments,
-          v.shares, v.saves, v.is_ad, c.scraped_at] for v in enriched.videos],
+          v.shares, v.saves, v.is_ad, _naive_utc(c.scraped_at)] for v in enriched.videos],
     )
 
 

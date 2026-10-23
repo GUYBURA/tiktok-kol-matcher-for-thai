@@ -1,7 +1,9 @@
-from datetime import datetime, timedelta
+from datetime import timedelta
 from pathlib import Path
 
 import duckdb
+
+from kol_matcher.schemas import now_utc_naive
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS raw_responses (
@@ -120,6 +122,6 @@ def delete_handle(con, handle: str) -> None:
     con.execute("DELETE FROM raw_responses WHERE contains(payload::TEXT, ?)", [f'"{handle}"'])
 
 def purge(con, older_than_days: int) -> None:
-    cutoff = datetime.now() - timedelta(days=older_than_days)
+    cutoff = now_utc_naive() - timedelta(days=older_than_days)
     for table, column in TIMESTAMP_COLUMNS.items():
         con.execute(f"DELETE FROM {table} WHERE {column} < ?", [cutoff])

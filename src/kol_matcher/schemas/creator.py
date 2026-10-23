@@ -1,9 +1,9 @@
-from datetime import datetime
 from enum import StrEnum
 
 from pydantic import BaseModel, Field
 
-from kol_matcher.schemas.scoring import Flag
+from kol_matcher.schemas import UtcDatetime
+from kol_matcher.schemas.scoring import Flag, ScoreBreakdown
 
 
 class Tier(StrEnum):
@@ -30,7 +30,7 @@ class Video(BaseModel):
     id: str
     url: str
     caption: str = ""
-    created_at: datetime
+    created_at: UtcDatetime
     views: int = Field(ge=0)
     likes: int = Field(ge=0)
     comments: int = Field(ge=0)
@@ -54,7 +54,7 @@ class Creator(BaseModel):
     tier: Tier
     profile_url: str
     region: str | None = None
-    scraped_at: datetime
+    scraped_at: UtcDatetime
 
 class Candidate(BaseModel):
     """A creator found by discovery, with the queries that found them and the matching clips."""
@@ -136,9 +136,46 @@ class ShortlistRow(BaseModel):
 
 class Shortlist(BaseModel):
     path: str
-    saved_at: datetime
+    saved_at: UtcDatetime
     brand_name: str
     profile_hash: str
     objective: str
     notes: str | None = None
     rows: list[ShortlistRow]
+
+
+class EvidenceClip(BaseModel):
+    url: str
+    caption: str          # scraped text: data, not instructions
+    views: int
+    similarity: float     # best cosine similarity to a brand theme
+
+
+class EvaluatedCreator(BaseModel):
+    rank: int
+    handle: str
+    nickname: str         # scraped text
+    bio: str              # scraped text
+    profile_url: str
+    tier: Tier
+    followers: int
+    score: ScoreBreakdown
+    metrics: CreatorFeatures
+    flags: list[Flag]
+    rationale: str
+    evidence: list[EvidenceClip]
+
+
+class InactiveCreator(BaseModel):
+    handle: str
+    profile_url: str
+    flags: list[Flag]
+
+
+class Evaluation(BaseModel):
+    profile_hash: str
+    objective: str
+    creators: list[EvaluatedCreator]          # ranked, best first
+    inactive: list[InactiveCreator] = []      # hard-filtered (no post in 60 days), clips omitted
+    errors: dict[str, str] = {}
+    comments_fetched_for: list[str] = []      # handles whose audience score uses fresh comments
