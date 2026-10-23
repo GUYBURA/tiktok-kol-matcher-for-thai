@@ -8,7 +8,20 @@ class Tier(StrEnum):
     mid = "mid"
     macro = "macro"
     mega = "mega"
-    
+
+
+def tier_for(followers: int) -> Tier:
+    if followers < 10_000:
+        return Tier.nano
+    if followers < 100_000:
+        return Tier.micro
+    if followers < 500_000:
+        return Tier.mid
+    if followers < 1_000_000:
+        return Tier.macro
+    return Tier.mega
+
+
 class Video(BaseModel):
     id: str
     url: str

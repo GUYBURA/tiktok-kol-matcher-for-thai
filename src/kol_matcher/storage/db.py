@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from pathlib import Path
 
 import duckdb
 
@@ -76,10 +77,39 @@ TIMESTAMP_COLUMNS = {
     "comment_stats": "scraped_at",
 }
 
+# Tables that replay mode needs: every external response plus every embedding.
+FIXTURE_TABLES = ["raw_responses", "embeddings"]
+
+
 def connect(path: str) -> duckdb.DuckDBPyConnection:
     con = duckdb.connect(path)
     con.execute(SCHEMA)
     return con
+
+
+def open_db(settings) -> duckdb.DuckDBPyConnection:
+    """Live: the on-disk cache. Replay: a fresh in-memory DB loaded from committed fixtures,
+    so a demo never writes to the fixture files."""
+    if not settings.replay_mode:
+        return connect(settings.cache_path)
+    con = connect(":memory:")
+    load_fixtures(con, settings.fixtures_path)
+    return con
+
+
+def export_fixtures(con, directory: str) -> None:
+    Path(directory).mkdir(parents=True, exist_ok=True)
+    for table in FIXTURE_TABLES:
+        target = (Path(directory) / f"{table}.parquet").as_posix()
+        con.execute(f"COPY {table} TO '{target}' (FORMAT parquet)")
+
+
+def load_fixtures(con, directory: str) -> None:
+    for table in FIXTURE_TABLES:
+        source = Path(directory) / f"{table}.parquet"
+        if not source.exists():
+            raise FileNotFoundError(f"Replay mode: missing fixture {source}")
+        con.execute(f"INSERT INTO {table} SELECT * FROM read_parquet(?)", [source.as_posix()])
 
 def delete_handle(con, handle: str) -> None:
     for table in HANDLE_TABLES:

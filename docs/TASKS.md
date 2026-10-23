@@ -33,11 +33,11 @@ Order follows dependencies. Each task has a "done when" check.
 ## Phase 3 — Sources (`sources/`, cache-first)
 
 - [x] **T3.1** Website fetcher (httpx + trafilatura)
-- [ ] **T3.2** Apify Facebook page + posts
-- [ ] **T3.3** Apify TikTok keyword search + profile videos
-- [ ] **T3.4** Apify TikTok comments (top candidates only)
+- [x] **T3.2** Apify Facebook page + posts
+- [x] **T3.3** Apify TikTok keyword search + profile videos
+- [x] **T3.4** Apify TikTok comments (top candidates only)
 - [ ] **T3.5** Replay mode: serve `fixtures/` only, no external calls; record real responses into fixtures once
-- [ ] **T3.6** Embedding provider interface + Ollama BGE-M3 implementation
+- [x] **T3.6** Embedding provider interface + Ollama BGE-M3 implementation
 
 ## Phase 4 — Core engine (`core/`, no MCP imports)
 
