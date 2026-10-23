@@ -1,4 +1,3 @@
-from concurrent.futures import ThreadPoolExecutor
 
 from pydantic import ValidationError
 
@@ -8,7 +7,6 @@ from kol_matcher.schemas.creator import Candidate, Discovery
 from kol_matcher.sources import apify_scraper
 
 MAX_QUERIES = 15
-MAX_PARALLEL_SEARCHES = 5
 
 
 def default_queries(profile: BrandProfile) -> list[str]:
@@ -29,21 +27,8 @@ def discover(con, settings, profile: BrandProfile, queries: list[str] | None = N
     if len(queries) > MAX_QUERIES:
         raise ValueError(f"At most {MAX_QUERIES} queries per search, got {len(queries)}")
 
-    def run(query):
-        # A DuckDB connection must not be shared across threads; each thread gets its own cursor.
-        with con.cursor() as cur:
-            return apify_scraper.search_tiktok(cur, settings, query)
-
-    results, errors = {}, {}
-    with ThreadPoolExecutor(max_workers=min(MAX_PARALLEL_SEARCHES, len(queries))) as pool:
-        futures = {q: pool.submit(run, q) for q in queries}
-        for q, future in futures.items():
-            try:
-                results[q] = future.result()
-            except ValueError:
-                raise
-            except Exception as e:  # noqa: BLE001 - one failed query should not lose the others
-                errors[q] = f"{type(e).__name__}: {e}"
+    # Batched: a few queries per Apify run; one failed run does not lose the others.
+    results, errors = apify_scraper.search_tiktok(con, settings, queries)
     if len(errors) == len(queries):
         raise RuntimeError(f"All searches failed: {errors}")
 

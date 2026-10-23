@@ -42,7 +42,7 @@ def con():
 
 
 @pytest.fixture
-def fake_search(monkeypatch):
+def fake_search(monkeypatch, as_batch):
     """Map query -> items (or an Exception to raise). Records the queries searched."""
     calls = []
 
@@ -53,7 +53,7 @@ def fake_search(monkeypatch):
             if isinstance(r, Exception):
                 raise r
             return r
-        monkeypatch.setattr(discover_mod.apify_scraper, "search_tiktok", search)
+        monkeypatch.setattr(discover_mod.apify_scraper, "search_tiktok", as_batch(search))
         return calls
 
     return install

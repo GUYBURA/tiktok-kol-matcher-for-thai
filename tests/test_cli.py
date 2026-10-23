@@ -36,7 +36,7 @@ HANDLES = ["a1", "b2", "c3", "d4", "e5", "f6", "g7"]
 
 
 @pytest.fixture(autouse=True)
-def fakes(tmp_path, monkeypatch):
+def fakes(tmp_path, monkeypatch, as_batch):
     con = connect(":memory:")
     settings = Settings(_env_file=None, shortlist_dir=str(tmp_path / "shortlists"), max_creators_per_evaluate=6)
     monkeypatch.setattr(cli, "_open", lambda: (con.cursor(), settings))
@@ -44,13 +44,13 @@ def fakes(tmp_path, monkeypatch):
     monkeypatch.setattr(apify_scraper, "fetch_facebook_posts", lambda c, s, url: [{"text": "โปร 1 แถม 1"}])
     monkeypatch.setattr(web_scraper, "fetch_website", lambda c, s, url: "เสื้อยืดผ้านุ่ม")
     monkeypatch.setattr(apify_scraper, "search_tiktok",
-                        lambda c, s, q: [clip(h, str(i)) for i, h in enumerate(HANDLES)])
+                        as_batch(lambda c, s, q: [clip(h, str(i)) for i, h in enumerate(HANDLES)]))
     evaluated = []
 
     def fetch_profile_videos(c, s, handle):
         evaluated.append(handle)
         return [clip(handle, f"{handle}{i}", likes=100 * (HANDLES.index(handle) + 1)) for i in range(3)]
-    monkeypatch.setattr(apify_scraper, "fetch_profile_videos", fetch_profile_videos)
+    monkeypatch.setattr(apify_scraper, "fetch_profile_videos", as_batch(fetch_profile_videos))
     monkeypatch.setattr(embeddings, "embed", lambda c, s, texts: np.array([[1.0, 0.0] for _ in texts]))
     yield evaluated
     con.close()

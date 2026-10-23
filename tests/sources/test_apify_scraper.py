@@ -269,7 +269,7 @@ def tiktok_settings(**kw):
 
 def test_search_tiktok_calls_actor_with_query_and_limits(con, fake_apify):
     calls = fake_apify(items=(TIKTOK_ITEM,))
-    search_tiktok(con, tiktok_settings(), "วิ่งมือใหม่")
+    results, errors = search_tiktok(con, tiktok_settings(), ["วิ่งมือใหม่"])
     [(actor, run_input, max_items)] = calls
     assert actor == TIKTOK_ACTOR
     assert run_input["searchQueries"] == ["วิ่งมือใหม่"]
@@ -277,28 +277,66 @@ def test_search_tiktok_calls_actor_with_query_and_limits(con, fake_apify):
     assert run_input["shouldDownloadVideos"] is False
     assert run_input["proxyCountryCode"] == "TH"
     assert run_input["commentsPerPost"] == 0
+    assert len(results["วิ่งมือใหม่"]) == 1 and errors == {}
+
+
+def test_search_batches_queries_and_splits_results_per_query(con, fake_apify):
+    items = [{**TIKTOK_ITEM, "id": str(i), "searchQuery": q} for i, q in enumerate(["a", "b", "a"])]
+    calls = fake_apify(items=items)
+    results, _ = search_tiktok(con, tiktok_settings(), ["a", "b", "c"])
+    assert len(calls) == 1                                   # one run for three queries
+    assert calls[0][1]["searchQueries"] == ["a", "b", "c"] and calls[0][2] == 15
+    assert [len(results[q]) for q in "abc"] == [2, 1, 0]
+    assert "searchQuery" not in results["a"][0]               # cache stays whitelisted
+    calls.clear()
+    again, _ = search_tiktok(con, tiktok_settings(), ["b"])  # cached per query, not per batch
+    assert calls == [] and len(again["b"]) == 1
+
+
+def test_search_splits_queries_across_runs(con, fake_apify, monkeypatch):
+    monkeypatch.setattr(apify_scraper, "QUERIES_PER_RUN", 2)
+    calls = fake_apify(items=())
+    search_tiktok(con, tiktok_settings(), ["a", "b", "c"])
+    assert sorted(c[1]["searchQueries"] for c in calls) == [["a", "b"], ["c"]]
+
+
+def test_profiles_batched_split_by_input_and_without_country_proxy(con, fake_apify):
+    items = [{**TIKTOK_ITEM, "id": "1", "input": "mint"}, {**TIKTOK_ITEM, "id": "2", "input": "Bank"}]
+    calls = fake_apify(items=items)
+    results, errors = fetch_profile_videos(con, settings(), ["@mint", "bank", "ghost"])
+    [(_, run_input, max_items)] = calls
+    assert run_input["profiles"] == ["mint", "bank", "ghost"] and max_items == 3 * VIDEOS_PER_PROFILE
+    assert run_input["excludePinnedPosts"] is True
+    assert "proxyCountryCode" not in run_input             # charged per item; not needed for profiles
+    assert [len(results[h]) for h in ["mint", "bank", "ghost"]] == [1, 1, 0]   # handle case ignored
+    assert errors == {}
 
 
 def test_profile_handle_normalized_so_cache_is_shared(con, fake_apify):
     calls = fake_apify(items=(TIKTOK_ITEM,))
-    fetch_profile_videos(con, settings(), "@runner_th")
-    fetch_profile_videos(con, settings(), "runner_th")
+    fetch_profile_videos(con, settings(), ["@runner_th"])
+    fetch_profile_videos(con, settings(), ["runner_th"])
     assert len(calls) == 1
     assert calls[0][1]["profiles"] == ["runner_th"]
-    assert calls[0][2] == VIDEOS_PER_PROFILE
-    assert calls[0][1]["excludePinnedPosts"] is True
+
+
+def test_failed_batch_reported_per_key(con, fake_apify):
+    fake_apify(run_fails=True)
+    results, errors = fetch_profile_videos(con, settings(), ["mint", "bank"])
+    assert results == {}
+    assert set(errors) == {"mint", "bank"} and "Apify run failed" in errors["mint"]
 
 
 def test_empty_handle_rejected(con, fake_apify):
     calls = fake_apify()
     with pytest.raises(ValueError):
-        fetch_profile_videos(con, settings(), " @ ")
+        fetch_profile_videos(con, settings(), [" @ "])
     assert calls == []
 
 
 def test_tiktok_cache_holds_only_whitelisted_fields(con, fake_apify):
     fake_apify(items=(TIKTOK_ITEM,))
-    [item] = search_tiktok(con, settings(), "วิ่งมือใหม่")
+    [item] = search_tiktok(con, settings(), ["วิ่งมือใหม่"])[0]["วิ่งมือใหม่"]
     assert set(item) == set(TIKTOK_FIELDS)
     [payload] = cached_payloads(con)
     assert "musicMeta" not in payload and "subtitleLinks" not in payload

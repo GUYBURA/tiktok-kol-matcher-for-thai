@@ -53,13 +53,13 @@ def settings(tmp_path):
 
 
 @pytest.fixture
-def evaluated(con, settings, monkeypatch):
+def evaluated(con, settings, monkeypatch, as_batch):
     """Two creators already enriched into the cache, then Apify made unreachable."""
     profiles = {
         "mint": [item("mint", "1", likes=2_000), item("mint", "2", likes=1_500)],
         "bank": [item("bank", "3", likes=100, bio="ขอบคุณที่อุดหนุนร้านของเรา")],
     }
-    monkeypatch.setattr(enrich_mod.apify_scraper, "fetch_profile_videos", lambda _c, _s, h: profiles[h])
+    monkeypatch.setattr(enrich_mod.apify_scraper, "fetch_profile_videos", as_batch(lambda _c, _s, h: profiles[h]))
     enrich(con, settings, ["mint", "bank"], now=NOW)
 
     def no_apify(*_args, **_kwargs):

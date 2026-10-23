@@ -60,8 +60,9 @@ def test_replay_never_writes_to_fixture_files(tmp_path, monkeypatch):
 
 def test_replay_miss_raises_instead_of_calling_apify(tmp_path, monkeypatch):
     record(tmp_path, monkeypatch)
-    with pytest.raises(RuntimeError, match="Replay mode"):
-        search_tiktok(open_db(settings(tmp_path, replay_mode=True)), settings(tmp_path, True), "ไม่มีใน fixture")
+    results, errors = search_tiktok(open_db(settings(tmp_path, replay_mode=True)), settings(tmp_path, True),
+                                    ["ไม่มีใน fixture"])
+    assert results == {} and "Replay mode" in errors["ไม่มีใน fixture"]
 
 
 def test_missing_fixtures_give_clear_error(tmp_path):
