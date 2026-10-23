@@ -1,3 +1,4 @@
+import threading
 from datetime import datetime
 from decimal import Decimal
 
@@ -16,6 +17,17 @@ POST_FIELDS = ["text", "time", "url", "likes", "comments", "shares",
                "isVideo", "viewsCount", "paidPartnership", "collaborators"]
 
 
+# ponytail: per-process limit; a CLI and a server running at once can each use the full allowance.
+# Needs a shared limiter (DB lock or queue) for a hosted multi-user server.
+_slots: dict[int, threading.BoundedSemaphore] = {}
+_slots_lock = threading.Lock()
+
+
+def _run_slots(limit: int) -> threading.BoundedSemaphore:
+    with _slots_lock:
+        return _slots.setdefault(limit, threading.BoundedSemaphore(limit))
+
+
 def run_actor(con, settings, actor:str, run_input:dict, max_items:int | None = None, fields: list[str] | None = None) -> list[dict]:
     if settings.replay_mode:
         hit = cache.get(con, actor, run_input, max_age_hours=None)
@@ -30,8 +42,11 @@ def run_actor(con, settings, actor:str, run_input:dict, max_items:int | None = N
     if settings.apify_token is None:
         raise RuntimeError("APIFY_TOKEN is not set (required outside replay mode)")
     client = ApifyClient(settings.apify_token.get_secret_value())
-    run = client.actor(actor).call(run_input=run_input, max_items=max_items,
-                                   max_total_charge_usd=Decimal("1.00"))
+    # Apify caps total memory of concurrently running actors per account; extra runs wait here
+    # instead of being refused.
+    with _run_slots(settings.apify_max_concurrent_runs):
+        run = client.actor(actor).call(run_input=run_input, max_items=max_items,
+                                       max_total_charge_usd=Decimal("1.00"))
     if run is None:
         raise RuntimeError(f"Apify run failed: {actor}")
     items = client.dataset(run.default_dataset_id).list_items().items
@@ -128,6 +143,7 @@ def parse_video(item: dict) -> Video:
         likes=item.get("diggCount") or 0,
         comments=item.get("commentCount") or 0,
         shares=item.get("shareCount") or 0,
+        saves=item.get("collectCount") or 0,
         is_ad=bool(item.get("isAd") or item.get("isSponsored")),
     )
 

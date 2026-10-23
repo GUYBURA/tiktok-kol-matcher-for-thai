@@ -41,18 +41,18 @@ Order follows dependencies. Each task has a "done when" check.
 
 ## Phase 4 — Core engine (`core/`, no MCP imports)
 
-- [ ] **T4.1** `analyze_brand`: collect, clean, return data + `BrandProfile` schema
-- [ ] **T4.2** Discover: run queries, Thai filter (Unicode regex on bio/captions, region), dedupe, record source query, enforce `MAX_RESULTS_PER_QUERY`
-- [ ] **T4.3** Enrich: recent videos, tier assignment, inactive filter (60 days)
-- [ ] **T4.4** Features
-  - [ ] Relevance: top-3 mean cosine + on-theme share
-  - [ ] Performance: median ER, views/follower, percentile within tier
-  - [ ] Audience: Thai comment share, purchase-intent rate
-  - [ ] Credibility: view consistency, recency, sponsored ratio, duplicate/emoji comments
-- [ ] **T4.5** Score: normalize 0-1 within pool, weighted sum by objective — done when same input gives same output
-- [ ] **T4.6** Flags: brand safety, competitor mention, expertise titles (unverified), high sponsored ratio
-- [ ] **T4.7** Template rationale string
-- [ ] **T4.8** Shortlist: recompute metrics from cache, write CSV, append to log
+- [x] **T4.1** `analyze_brand`: collect, clean, return data + `BrandProfile` schema
+- [x] **T4.2** Discover: run queries, Thai filter (Unicode regex on bio/captions, region), dedupe, record source query, enforce `MAX_RESULTS_PER_QUERY`
+- [x] **T4.3** Enrich: recent videos, tier assignment, inactive filter (60 days)
+- [x] **T4.4** Features
+  - [x] Relevance: top-3 mean cosine + on-theme share
+  - [x] Performance (Wisesight definitions): ER by impression + impressions/follower scored; ER by follower and medians display-only
+  - [x] Audience: Thai comment share, purchase-intent rate
+  - [x] Credibility: view consistency, recency, sponsored ratio, duplicate/emoji comments
+- [x] **T4.5** Score: fixed 0-1 scales per creator (no pool normalization), weighted sum by objective — done when same input gives same output
+- [x] **T4.6** Flags: brand safety, competitor mention, expertise titles (unverified), high sponsored ratio
+- [x] **T4.7** Template rationale string
+- [x] **T4.8** Shortlist: recompute metrics from cache, write CSV, append to log
 
 ## Phase 5 — MCP tools (`tools/`, thin adapters)
 

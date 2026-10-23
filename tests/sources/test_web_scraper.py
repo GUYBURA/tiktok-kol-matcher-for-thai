@@ -47,36 +47,54 @@ def fake_get(monkeypatch):
 
 def test_extracts_main_text(con, fake_get):
     fake_get()
-    text = fetch_website(con, URL, settings())
+    text = fetch_website(con, settings(), URL)
     assert "รองเท้าวิ่งสำหรับมือใหม่" in text
     assert "Home | Shop | Contact" not in text
 
 
+JS_APP_HTML = """<html><head>
+<title>Yuedpao ยืดเปล่า ศูนย์รวมเสื้อยืดแบรนด์ไทย</title>
+<meta name="description" content="ศูนย์รวมเสื้อยืดและสินค้าแฟชั่นแบรนด์ไทย ผ้านุ่มใส่สบาย"/>
+</head><body><div id="__next"></div><script src="/app.js"></script></body></html>"""
+
+
+def test_js_rendered_site_falls_back_to_title_and_description(con, fake_get):
+    fake_get(text=JS_APP_HTML)
+    text = fetch_website(con, settings(), URL)
+    assert "Yuedpao ยืดเปล่า" in text
+    assert "ผ้านุ่มใส่สบาย" in text
+
+
+def test_page_without_any_text_returns_empty(con, fake_get):
+    fake_get(text="<html><head></head><body><script></script></body></html>")
+    assert fetch_website(con, settings(), URL) == ""
+
+
 def test_second_call_served_from_cache(con, fake_get):
     calls = fake_get()
-    first = fetch_website(con, URL, settings())
-    second = fetch_website(con, URL, settings())
+    first = fetch_website(con, settings(), URL)
+    second = fetch_website(con, settings(), URL)
     assert first == second
     assert len(calls) == 1
 
 
 def test_expired_cache_refetches(con, fake_get):
     calls = fake_get()
-    fetch_website(con, URL, settings())
-    fetch_website(con, URL, settings(ttl_hours=0))
+    fetch_website(con, settings(), URL)
+    fetch_website(con, settings(ttl_hours=0), URL)
     assert len(calls) == 2
 
 
 def test_truncates_long_text(con, fake_get, monkeypatch):
     fake_get()
     monkeypatch.setattr(web_scraper.trafilatura, "extract", lambda html: "ก" * (MAX_CHARS + 500))
-    assert len(fetch_website(con, URL, settings())) == MAX_CHARS
+    assert len(fetch_website(con, settings(), URL)) == MAX_CHARS
 
 
 def test_http_error_raises_and_caches_nothing(con, fake_get):
     fake_get(status=404)
     with pytest.raises(httpx.HTTPStatusError):
-        fetch_website(con, URL, settings())
+        fetch_website(con, settings(), URL)
     assert con.execute("SELECT count(*) FROM raw_responses").fetchone()[0] == 0
 
 
@@ -84,19 +102,19 @@ def test_http_error_raises_and_caches_nothing(con, fake_get):
 def test_rejects_non_http_urls(con, fake_get, url):
     calls = fake_get()
     with pytest.raises(ValueError):
-        fetch_website(con, url, settings())
+        fetch_website(con, settings(), url)
     assert calls == []
 
 
 def test_replay_serves_cache_without_network(con, fake_get):
     calls = fake_get()
-    expected = fetch_website(con, URL, settings())
-    assert fetch_website(con, URL, settings(replay_mode=True)) == expected
+    expected = fetch_website(con, settings(), URL)
+    assert fetch_website(con, settings(replay_mode=True), URL) == expected
     assert len(calls) == 1
 
 
 def test_replay_miss_raises_without_network(con, fake_get):
     calls = fake_get()
     with pytest.raises(RuntimeError, match="Replay mode"):
-        fetch_website(con, URL, settings(replay_mode=True))
+        fetch_website(con, settings(replay_mode=True), URL)
     assert calls == []

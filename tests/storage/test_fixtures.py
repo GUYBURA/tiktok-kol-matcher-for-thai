@@ -74,3 +74,17 @@ def test_live_mode_uses_on_disk_cache(tmp_path):
     open_db(live).close()
     assert (tmp_path / "cache.duckdb").exists()
     assert connect(live.cache_path).execute("SELECT count(*) FROM raw_responses").fetchone()[0] == 0
+
+
+def test_old_cache_gets_saves_column(tmp_path):
+    """A cache created before `saves` existed is migrated on connect, keeping its rows."""
+    import duckdb
+    path = str(tmp_path / "old.duckdb")
+    old = duckdb.connect(path)
+    old.execute("""CREATE TABLE videos (id TEXT PRIMARY KEY, handle TEXT NOT NULL, url TEXT, caption TEXT,
+                   created_at TIMESTAMP, views BIGINT, likes BIGINT, comments BIGINT, shares BIGINT,
+                   is_ad BOOLEAN, scraped_at TIMESTAMP NOT NULL)""")
+    old.execute("INSERT INTO videos VALUES ('1', 'mint', 'u', 'c', NULL, 10, 1, 0, 0, false, now())")
+    old.close()
+    con = connect(path)
+    assert con.execute("SELECT id, saves FROM videos").fetchall() == [("1", 0)]
