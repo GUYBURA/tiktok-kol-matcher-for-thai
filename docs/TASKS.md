@@ -66,8 +66,8 @@ Order follows dependencies. Each task has a "done when" check.
 
 ## Phase 6 — CLI + skill
 
-- [ ] **T6.1** CLI `analyze` and `match` wired to core
-- [ ] **T6.2** `skills/kol-matcher/SKILL.md`: workflow including confirm-profile step
+- [x] **T6.1** CLI `analyze` and `match` wired to core
+- [x] **T6.2** `skills/kol-matcher/SKILL.md`: workflow including confirm-profile step
 
 ## Phase 7 — Evals
 
