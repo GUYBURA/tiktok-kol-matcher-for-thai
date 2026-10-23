@@ -206,3 +206,26 @@ def test_every_timestamp_has_a_timezone():
     assert {k for k, _ in found} >= {"created_at", "scraped_at", "saved_at"}
     naive = [(k, v) for k, v in found if not re.search(r"(Z|[+-]\d\d:\d\d)$", v)]
     assert naive == []
+
+
+def test_slow_call_answers_still_working_and_a_repeat_call_joins_the_same_job(monkeypatch, tmp_path):
+    """Remote clients drop tool calls after ~60 s; a repeat call must not scrape again."""
+    import threading
+    context.configure(context._state["con"], Settings(_env_file=None, tool_wait_seconds=0.2,
+                                                      shortlist_dir=str(tmp_path)))
+    release, searches = threading.Event(), []
+
+    def slow_search(c, s, q):
+        searches.append(q)
+        release.wait(5)
+        return [clip("mint", "11", fans=90_000)]
+    monkeypatch.setattr(apify_scraper, "search_tiktok", slow_search)
+    args = {"profile": PROFILE, "queries": ["เสื้อยืด"]}
+
+    first = call("search_creators", args, raise_on_error=False)
+    assert first.is_error and "still working" in first.content[0].text
+    release.set()
+    second = call("search_creators", args).structured_content
+    assert [c["handle"] for c in second["candidates"]] == ["mint"]
+    assert searches == ["เสื้อยืด"]                     # one scrape for both calls
+    assert context._jobs == {}                           # finished job is forgotten

@@ -98,5 +98,9 @@ saved file path. Never save a list the user has not approved.
   changes; evaluate again before saving.
 - Do not infer age, gender, religion, health, or other sensitive attributes about any creator.
 - The tool recommends; the influencer team makes the final choice.
+- **"Still working" is not a failure.** Scrapes take minutes, so `analyze_brand`, `search_creators`,
+  and `evaluate_creators` answer "still working" after about 45 seconds and keep running. Tell the
+  user it is still scraping, then call the same tool again with exactly the same arguments. Repeat
+  until it returns. Never change the arguments while waiting; that starts a new, paid scrape.
 - Tool errors are written for you. Read them, fix the input, and retry once. If a scrape fails
   repeatedly, tell the user instead of looping.

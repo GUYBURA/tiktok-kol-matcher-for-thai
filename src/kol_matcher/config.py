@@ -20,3 +20,7 @@ class Settings(BaseSettings):
     max_results_per_query: int = 30
     max_creators_per_evaluate: int = 20
     cache_ttl_hours: float = 24
+    # Remote MCP clients (claude.ai through Claude Desktop) give up on a tool call after ~60 s, but a
+    # cold search or evaluation takes minutes. Slow tools answer "still working" after this many
+    # seconds and keep running; the same call again picks up the same job.
+    tool_wait_seconds: float = Field(default=45, gt=0)
