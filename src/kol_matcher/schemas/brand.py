@@ -1,8 +1,11 @@
-from typing import Annotated
-from pydantic import BaseModel, Field, ConfigDict
 from enum import StrEnum
+from typing import Annotated
+
+from pydantic import BaseModel, ConfigDict, Field
+
 from kol_matcher.schemas import stable_hash
 from kol_matcher.schemas.creator import Tier
+
 
 class PriceTier(StrEnum):
     cheap = "cheap"
@@ -30,3 +33,10 @@ class BrandProfile(BaseModel):
     
 def profile_hash(p: BrandProfile) -> str:
     return stable_hash(p.model_dump(mode="json"))
+
+class BrandData(BaseModel):
+    facebook_page: dict | None = None
+    facebook_posts: list[dict] = []
+    website_text: str | None = None
+    errors: dict[str, str] = {}
+    profile_schema: dict

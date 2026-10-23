@@ -1,6 +1,8 @@
 from enum import StrEnum
 from typing import Literal
+
 from pydantic import BaseModel, Field
+
 
 class Objective(StrEnum):
     awareness = "awareness"
@@ -32,6 +34,8 @@ class FlagType(StrEnum):
     competitor_mention = "competitor_mention"
     self_declared_expertise = "self_declared_expertise"
     high_sponsored_ratio = "high_sponsored_ratio"
+    shop_account = "shop_account"            # bio reads like a store or brand, not a creator
+    work_restriction = "work_restriction"    # bio limits what work the creator takes, e.g. "ไม่รับรีวิวสกินแคร์"
 
 
 class Flag(BaseModel):

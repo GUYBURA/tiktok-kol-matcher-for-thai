@@ -1,6 +1,8 @@
-from enum import StrEnum
 from datetime import datetime
+from enum import StrEnum
+
 from pydantic import BaseModel, Field
+
 
 class Tier(StrEnum):
     nano = "nano"
@@ -50,3 +52,17 @@ class Creator(BaseModel):
     profile_url: str
     region: str | None = None
     scraped_at: datetime
+
+class Candidate(BaseModel):
+    """A creator found by discovery, with the queries that found them and the matching clips."""
+    creator: Creator
+    found_by: list[str]
+    videos: list[Video]
+
+
+class Discovery(BaseModel):
+    candidates: list[Candidate]
+    queries: list[str]
+    errors: dict[str, str] = {}           # query -> error message
+    videos_seen: int = 0
+    non_thai_filtered: int = 0            # creators dropped by the Thai filter
