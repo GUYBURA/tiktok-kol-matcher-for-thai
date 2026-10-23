@@ -143,6 +143,7 @@ def parse_video(item: dict) -> Video:
         likes=item.get("diggCount") or 0,
         comments=item.get("commentCount") or 0,
         shares=item.get("shareCount") or 0,
+        saves=item.get("collectCount") or 0,
         is_ad=bool(item.get("isAd") or item.get("isSponsored")),
     )
 

@@ -286,6 +286,7 @@ def test_parse_video():
     assert video.id == TIKTOK_ITEM["id"]
     assert video.views == 748500 and video.likes == 152700
     assert video.is_ad is True  # isSponsored counts as an ad
+    assert video.saves == 3575  # collectCount
     assert len(video.caption) == MAX_CAPTION_CHARS
     assert video.created_at.year == 2026
 

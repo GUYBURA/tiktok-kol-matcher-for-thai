@@ -93,9 +93,11 @@ def _store(con, settings, enriched: EnrichedCreator) -> None:
          c.handle, c.followers, c.scraped_at - timedelta(hours=settings.cache_ttl_hours)],
     )
     con.executemany(
-        "INSERT OR REPLACE INTO videos VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        """INSERT OR REPLACE INTO videos
+           (id, handle, url, caption, created_at, views, likes, comments, shares, saves, is_ad, scraped_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
         [[v.id, c.handle, v.url, v.caption, _naive_utc(v.created_at), v.views, v.likes, v.comments,
-          v.shares, v.is_ad, c.scraped_at] for v in enriched.videos],
+          v.shares, v.saves, v.is_ad, c.scraped_at] for v in enriched.videos],
     )
 
 

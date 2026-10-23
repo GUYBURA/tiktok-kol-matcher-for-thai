@@ -35,6 +35,7 @@ class Video(BaseModel):
     likes: int = Field(ge=0)
     comments: int = Field(ge=0)
     shares: int = Field(ge=0)
+    saves: int = Field(default=0, ge=0)
     is_ad: bool = False
     
 class CommentStats(BaseModel):
@@ -81,3 +82,29 @@ class Enrichment(BaseModel):
     creators: list[EnrichedCreator]           # active creators, in input order
     inactive: list[EnrichedCreator] = []      # hard-filtered: no post within INACTIVE_DAYS
     errors: dict[str, str] = {}               # handle -> error message
+
+
+class CreatorFeatures(BaseModel):
+    """Raw per-creator features. Normalized and weighted into a score in scoring (T4.5)."""
+    handle: str
+    tier: Tier
+    # Relevance (measured)
+    relevance_top3: float                  # mean of the 3 best clip-to-theme similarities
+    on_theme_share: float = Field(ge=0, le=1)
+    top_theme: str | None                  # theme matched by the most on-theme clips
+    # Performance (measured). Definitions: https://wisesight.com/th/articles/what-is-engagement/
+    # Impression = plays; Engagement = likes + comments + shares + saves; Reach is not public on TikTok.
+    # Scored: er_by_impression (content quality) and impressions_per_follower (reach proxy).
+    # er_by_follower ~= er_by_impression x impressions_per_follower, so it is display-only to avoid
+    # counting the same signal twice. The medians are display-only too.
+    median_impressions: float              # typical plays per clip
+    median_engagement: float               # typical engagements per clip
+    er_by_impression: float                # (total engagement / total impressions) x 100, over the clips
+    er_by_follower: float                  # (engagement per clip / followers) x 100
+    impressions_per_follower: float        # median impressions / followers: share of followers reached
+    # Credibility (measured)
+    view_consistency: float = Field(ge=0, le=1)   # 1 / (1 + coefficient of variation of views)
+    days_since_post: int
+    sponsored_ratio: float = Field(ge=0, le=1)
+    # Audience (inferred) and comment quality: None when no comments were fetched
+    comment_stats: CommentStats | None = None

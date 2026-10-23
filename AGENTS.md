@@ -102,7 +102,7 @@ Each component is normalized to 0-1 within the candidate pool.
 | Component | Signals | Basis |
 |---|---|---|
 | Relevance | Embedding similarity between brand themes and each clip (mean of the top 3), combined with niche consistency (share of clips on-theme) | measured |
-| Performance | Median engagement rate by views and median views per follower, as percentiles within the same tier | measured |
+| Performance | Engagement rate by impression (content quality) and impressions per follower (reach proxy), as percentiles within the same tier. Definitions follow [Wisesight](https://wisesight.com/th/articles/what-is-engagement/): Engagement = likes + comments + shares + saves; Impression = plays. Engagement rate by follower is reported but not scored, since it is roughly the product of the two scored metrics. Reach (unique viewers) is not public on TikTok. | measured |
 | Audience | Share of Thai-language comments and rate of purchase-intent comments (e.g. "พิกัด", "ซื้อที่ไหน") | **inferred** |
 | Credibility | View consistency, posting recency, sponsored-content ratio, duplicate or emoji-only comments | measured |
 

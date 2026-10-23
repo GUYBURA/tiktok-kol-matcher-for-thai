@@ -37,7 +37,8 @@ CREATE TABLE IF NOT EXISTS videos (
     comments    BIGINT,
     shares      BIGINT,
     is_ad       BOOLEAN,
-    scraped_at  TIMESTAMP NOT NULL
+    scraped_at  TIMESTAMP NOT NULL,
+    saves       BIGINT DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS comment_stats (
@@ -84,6 +85,8 @@ FIXTURE_TABLES = ["raw_responses", "embeddings"]
 def connect(path: str) -> duckdb.DuckDBPyConnection:
     con = duckdb.connect(path)
     con.execute(SCHEMA)
+    # Migration for caches created before `saves` existed.
+    con.execute("ALTER TABLE videos ADD COLUMN IF NOT EXISTS saves BIGINT DEFAULT 0")
     return con
 
 
