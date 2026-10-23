@@ -1,7 +1,9 @@
-from datetime import datetime, timedelta
+from datetime import timedelta
 from pathlib import Path
 
 import duckdb
+
+from kol_matcher.schemas import now_utc_naive
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS raw_responses (
@@ -94,6 +96,8 @@ def open_db(settings) -> duckdb.DuckDBPyConnection:
     """Live: the on-disk cache. Replay: a fresh in-memory DB loaded from committed fixtures,
     so a demo never writes to the fixture files."""
     if not settings.replay_mode:
+        # DuckDB does not create parent directories; a fresh clone has no data/.
+        Path(settings.cache_path).parent.mkdir(parents=True, exist_ok=True)
         return connect(settings.cache_path)
     con = connect(":memory:")
     load_fixtures(con, settings.fixtures_path)
@@ -120,6 +124,6 @@ def delete_handle(con, handle: str) -> None:
     con.execute("DELETE FROM raw_responses WHERE contains(payload::TEXT, ?)", [f'"{handle}"'])
 
 def purge(con, older_than_days: int) -> None:
-    cutoff = datetime.now() - timedelta(days=older_than_days)
+    cutoff = now_utc_naive() - timedelta(days=older_than_days)
     for table, column in TIMESTAMP_COLUMNS.items():
         con.execute(f"DELETE FROM {table} WHERE {column} < ?", [cutoff])

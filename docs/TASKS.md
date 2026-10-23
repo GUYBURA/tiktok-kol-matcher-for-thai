@@ -56,13 +56,13 @@ Order follows dependencies. Each task has a "done when" check.
 
 ## Phase 5 — MCP tools (`tools/`, thin adapters)
 
-- [ ] **T5.1** `analyze_brand`
-- [ ] **T5.2** `search_creators`
-- [ ] **T5.3** `evaluate_creators` (cap 50 handles)
-- [ ] **T5.4** `get_creator_detail`
-- [ ] **T5.5** `save_shortlist`
-- [ ] **T5.6** Register all tools in `server.py`
-- [ ] Each tool: validates input, calls core, keeps scraped text in separate fields, returns `profile_hash`
+- [x] **T5.1** `analyze_brand`
+- [x] **T5.2** `search_creators`
+- [x] **T5.3** `evaluate_creators` (cap 20 handles, top 5 returned in full)
+- [x] **T5.4** `get_creator_detail`
+- [x] **T5.5** `save_shortlist`
+- [x] **T5.6** Register all tools in `server.py`
+- [x] Each tool: validates input, calls core, keeps scraped text in separate fields, returns `profile_hash`
 
 ## Phase 6 — CLI + skill
 
