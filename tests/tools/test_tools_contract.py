@@ -126,6 +126,18 @@ def test_evaluate_creators_ranks_flags_and_explains():
     assert out["comments_fetched_for"] == []
 
 
+
+def test_evaluate_returns_top_n_in_full_and_the_rest_as_handles():
+    handles = ["mint", "bank", "inject", "plain"]
+    out = call("evaluate_creators", {"profile": PROFILE, "handles": handles, "top_n": 2}).structured_content
+    assert [c["rank"] for c in out["creators"]] == [1, 2]
+    assert [m["rank"] for m in out["more"]] == [3, 4]
+    assert {c["handle"] for c in out["creators"]} | {m["handle"] for m in out["more"]} == set(handles)
+    assert "evidence" not in out["more"][0]
+    assert all(x["profile_url"] == f"https://www.tiktok.com/@{x['handle']}" for x in out["creators"] + out["more"])
+    default = call("evaluate_creators", {"profile": PROFILE, "handles": handles}).structured_content
+    assert len(default["creators"]) == 4 and default["more"] == []   # default top 5 covers all four
+
 def test_evaluate_conversion_fetches_comments_once(fakes):
     out = call("evaluate_creators", {"profile": PROFILE, "handles": ["mint", "bank"], "objective": "conversion"}
                ).structured_content

@@ -1,8 +1,15 @@
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from kol_matcher.schemas import UtcDatetime
-from kol_matcher.schemas.creator import CommentStats, Creator, Shortlist, Tier, Video
+from kol_matcher.schemas.creator import (
+    CommentStats,
+    Creator,
+    Evaluation,
+    Shortlist,
+    Tier,
+    Video,
+)
 
 # Tool outputs that are not core models already. Scraped text (bio, nickname, caption) is
 # returned in its own fields: it is data from third parties, never instructions.
@@ -48,3 +55,17 @@ class CreatorDetail(BaseModel):
 
 class ShortlistResult(Shortlist):
     csv: str
+
+
+class RankedHandle(BaseModel):
+    rank: int
+    handle: str
+    profile_url: str
+    tier: Tier
+    total: float
+
+
+class EvaluationResult(Evaluation):
+    """Evaluation with `creators` cut to the top N, to keep the AI client's context small.
+    The rest of the ranking is listed in `more` without metrics or evidence."""
+    more: list[RankedHandle] = Field(default_factory=list)   # ranked below the top N, best first
