@@ -96,6 +96,8 @@ def open_db(settings) -> duckdb.DuckDBPyConnection:
     """Live: the on-disk cache. Replay: a fresh in-memory DB loaded from committed fixtures,
     so a demo never writes to the fixture files."""
     if not settings.replay_mode:
+        # DuckDB does not create parent directories; a fresh clone has no data/.
+        Path(settings.cache_path).parent.mkdir(parents=True, exist_ok=True)
         return connect(settings.cache_path)
     con = connect(":memory:")
     load_fixtures(con, settings.fixtures_path)
