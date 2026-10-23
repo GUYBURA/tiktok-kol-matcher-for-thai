@@ -108,3 +108,37 @@ class CreatorFeatures(BaseModel):
     sponsored_ratio: float = Field(ge=0, le=1)
     # Audience (inferred) and comment quality: None when no comments were fetched
     comment_stats: CommentStats | None = None
+
+
+class ShortlistRow(BaseModel):
+    rank: int
+    handle: str
+    profile_url: str
+    tier: Tier
+    followers: int
+    total_score: float
+    relevance: float
+    performance: float
+    audience: float | None
+    credibility: float
+    er_by_impression: float
+    er_by_follower: float
+    impressions_per_follower: float
+    median_impressions: float
+    median_engagement: float
+    on_theme_share: float
+    top_theme: str | None
+    sponsored_ratio: float
+    days_since_post: int
+    flags: str
+    rationale: str
+
+
+class Shortlist(BaseModel):
+    path: str
+    saved_at: datetime
+    brand_name: str
+    profile_hash: str
+    objective: str
+    notes: str | None = None
+    rows: list[ShortlistRow]

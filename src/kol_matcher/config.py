@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     cache_path: str = "data/cache.duckdb"
     replay_mode: bool = False
     fixtures_path: str = "fixtures"
+    shortlist_dir: str = "data/shortlists"   # git-ignored: shortlists hold creator data (PDPA)
     embedding_provider: str = "ollama"
     ollama_base_url: str = "http://localhost:11434"
     embedding_model: str = "bge-m3"
