@@ -46,6 +46,7 @@ def run_actor(con, settings, actor:str, run_input:dict, max_items:int | None = N
     # instead of being refused.
     with _run_slots(settings.apify_max_concurrent_runs):
         run = client.actor(actor).call(run_input=run_input, max_items=max_items,
+                                       memory_mbytes=settings.apify_run_memory_mb,
                                        max_total_charge_usd=Decimal("1.00"))
     if run is None:
         raise RuntimeError(f"Apify run failed: {actor}")

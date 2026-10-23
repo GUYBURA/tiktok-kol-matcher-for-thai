@@ -85,6 +85,29 @@ def fake_apify(monkeypatch):
     return install
 
 
+def test_run_actor_caps_memory_per_run(con, monkeypatch):
+    """Apify limits total memory of concurrent runs; actors default to 4 GB, so the cap is explicit."""
+    seen = {}
+
+    class FakeActor:
+        def call(self, **kwargs):
+            seen.update(kwargs)
+            return SimpleNamespace(default_dataset_id="ds1")
+
+    class FakeClient:
+        def __init__(self, _token):
+            pass
+
+        def actor(self, _actor):
+            return FakeActor()
+
+        def dataset(self, _dataset_id):
+            return SimpleNamespace(list_items=lambda: SimpleNamespace(items=[]))
+
+    monkeypatch.setattr(apify_scraper, "ApifyClient", FakeClient)
+    apify_scraper.run_actor(con, settings(), "some/actor", {"q": 1})
+    assert seen["memory_mbytes"] == 2048
+
 def test_fetch_page_returns_whitelisted_fields(con, fake_apify):
     calls = fake_apify()
     page = fetch_facebook_page(con, settings(), URL)
