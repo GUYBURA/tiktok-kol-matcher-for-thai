@@ -1,0 +1,34 @@
+[project]
+name = "tiktok-kol-matcher-tools"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "apify-client>=3.3.0",
+    "duckdb>=2.0.0",
+    "fastmcp>=4.1.3",
+    "httpx>=0.28.1",
+    "numpy>=2.5.4",
+    "pydantic>=2.14.1",
+    "pydantic-settings>=2.16.1",
+    "trafilatura>=2.3.1",
+    "typer>=0.27.3",
+]
+
+[project.scripts]
+kol-matcher-server = "kol_matcher.server:main"
+kol-matcher = "kol_matcher.cli:app"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+    "ruff>=0.17.1",
+]
+
+[build-system]
+requires = ["uv_build>=0.11.25,<0.12"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "kol_matcher"
