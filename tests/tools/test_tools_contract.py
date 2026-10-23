@@ -136,7 +136,7 @@ def test_evaluate_returns_top_n_in_full_and_the_rest_as_handles():
     assert "evidence" not in out["more"][0]
     assert all(x["profile_url"] == f"https://www.tiktok.com/@{x['handle']}" for x in out["creators"] + out["more"])
     default = call("evaluate_creators", {"profile": PROFILE, "handles": handles}).structured_content
-    assert len(default["creators"]) == 4 and default["more"] == []   # default top 5 covers all four
+    assert len(default["creators"]) == 3 and [m["rank"] for m in default["more"]] == [4]   # default top 3
 
 def test_evaluate_conversion_fetches_comments_once(fakes):
     out = call("evaluate_creators", {"profile": PROFILE, "handles": ["mint", "bank"], "objective": "conversion"}

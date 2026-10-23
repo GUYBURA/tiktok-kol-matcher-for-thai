@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     ollama_base_url: str = "http://localhost:11434"
     embedding_model: str = "bge-m3"
     max_results_per_query: int = 30
-    max_creators_per_evaluate: int = 20
+    max_creators_per_evaluate: int = 5    # each creator is ~$0.11 of Apify on a cold cache
     cache_ttl_hours: float = 24
     # Remote MCP clients (claude.ai through Claude Desktop) give up on a tool call after ~60 s, but a
     # cold search or evaluation takes minutes. Slow tools answer "still working" after this many

@@ -60,7 +60,7 @@ def match(
                                                        "keywords and hashtags")] = None,
     pool: Annotated[int | None, typer.Option(min=1, help="Candidates to evaluate. Default: "
                                                         "MAX_CREATORS_PER_EVALUATE")] = None,
-    top: Annotated[int, typer.Option(min=1, help="Creators to show and export")] = 5,
+    top: Annotated[int, typer.Option(min=1, help="Creators to show and export")] = 3,
     out: Annotated[Path | None, typer.Option(help="Also export the top creators to this CSV")] = None,
 ):
     """Search, evaluate, and rank creators for a saved BrandProfile. Prints the top creators."""

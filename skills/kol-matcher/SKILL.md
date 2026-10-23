@@ -41,7 +41,7 @@ Call `search_creators` with the confirmed profile. Pass your own `queries` (at m
 can do better than the profile's keywords: specific sub-niches, Thai slang, product use cases.
 Each query takes about 30-60 seconds on a cold cache.
 
-From `candidates`, pick **10-20** handles that look like real creators in the niche. Skip obvious
+From `candidates`, pick the **5** best handles that look like real creators in the niche. Skip obvious
 shops, brand accounts, and off-topic creators using `bio` and `sample_clips`. Candidates are
 pre-ordered by how many queries found them, which is not a score.
 
@@ -50,7 +50,7 @@ specific queries instead of evaluating a poor pool.
 
 ### 4. Evaluate
 
-Call `evaluate_creators` with the profile, the handles, and the objective. It returns the top 5
+Call `evaluate_creators` with the profile, the handles, and the objective. It returns the top 3
 in full (`creators`) and the rest of the ranking as handles in `more`. Creators with no post in
 60 days are in `inactive`; handles that could not be fetched are in `errors`.
 
@@ -72,7 +72,7 @@ say so and explain why. Do not change the scores; the user decides.
 
 ### 6. Present the shortlist
 
-Present the top 5 as a table with, for each creator:
+Present the top 3 as a table with, for each creator:
 
 | Rank | Creator | Profile | Tier / followers | Score | Why | Flags |
 |---|---|---|---|---|---|---|
