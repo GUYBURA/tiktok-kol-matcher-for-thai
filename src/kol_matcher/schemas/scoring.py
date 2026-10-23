@@ -24,7 +24,7 @@ class Metric(BaseModel):
 class ScoreBreakdown(BaseModel):
     relevance: Metric
     performance: Metric
-    audience: Metric
+    audience: Metric | None    # None when no comments were fetched; total is then reweighted
     credibility: Metric
     total: float = Field(ge=0, le=1)
     

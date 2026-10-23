@@ -46,10 +46,10 @@ Order follows dependencies. Each task has a "done when" check.
 - [x] **T4.3** Enrich: recent videos, tier assignment, inactive filter (60 days)
 - [x] **T4.4** Features
   - [x] Relevance: top-3 mean cosine + on-theme share
-  - [x] Performance (Wisesight definitions): ER by impression + impressions/follower scored; ER by follower and medians display-only (percentile within tier in T4.5)
+  - [x] Performance (Wisesight definitions): ER by impression + impressions/follower scored; ER by follower and medians display-only
   - [x] Audience: Thai comment share, purchase-intent rate
   - [x] Credibility: view consistency, recency, sponsored ratio, duplicate/emoji comments
-- [ ] **T4.5** Score: normalize 0-1 within pool, weighted sum by objective — done when same input gives same output
+- [x] **T4.5** Score: fixed 0-1 scales per creator (no pool normalization), weighted sum by objective — done when same input gives same output
 - [ ] **T4.6** Flags: brand safety, competitor mention, expertise titles (unverified), high sponsored ratio
 - [ ] **T4.7** Template rationale string
 - [ ] **T4.8** Shortlist: recompute metrics from cache, write CSV, append to log

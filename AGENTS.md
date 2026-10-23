@@ -97,12 +97,12 @@ The schema uses field descriptions, enums, and length limits (for example, at mo
 
 ## Scoring
 
-Each component is normalized to 0-1 within the candidate pool.
+Each creator is scored on their own numbers: every metric goes through a fixed scale to 0-1 (anchors in `core/scoring.py`, tuned with the backtest), so a score does not depend on which other creators are in the same call and is comparable across calls.
 
 | Component | Signals | Basis |
 |---|---|---|
 | Relevance | Embedding similarity between brand themes and each clip (mean of the top 3), combined with niche consistency (share of clips on-theme) | measured |
-| Performance | Engagement rate by impression (content quality) and impressions per follower (reach proxy), as percentiles within the same tier. Definitions follow [Wisesight](https://wisesight.com/th/articles/what-is-engagement/): Engagement = likes + comments + shares + saves; Impression = plays. Engagement rate by follower is reported but not scored, since it is roughly the product of the two scored metrics. Reach (unique viewers) is not public on TikTok. | measured |
+| Performance | Engagement rate by impression (content quality) and impressions per follower (reach proxy). Definitions follow [Wisesight](https://wisesight.com/th/articles/what-is-engagement/): Engagement = likes + comments + shares + saves; Impression = plays. Engagement rate by follower is reported but not scored, since it is roughly the product of the two scored metrics. Reach (unique viewers) is not public on TikTok. | measured |
 | Audience | Share of Thai-language comments and rate of purchase-intent comments (e.g. "พิกัด", "ซื้อที่ไหน") | **inferred** |
 | Credibility | View consistency, posting recency, sponsored-content ratio, duplicate or emoji-only comments | measured |
 
@@ -116,7 +116,7 @@ The final score is a weighted sum. Weights depend on the campaign objective:
 
 These are initial weights, tuned with the backtest in `evals/`.
 
-**Tiers:** nano (<10K followers), micro (10K-100K), mid (100K-500K), macro (500K-1M), mega (1M+). Performance is compared within the same tier, so micro creators are not ranked directly against mega creators.
+**Tiers:** nano (<10K followers), micro (10K-100K), mid (100K-500K), macro (500K-1M), mega (1M+). Both scored performance metrics are ratios (per impression, per follower), so micro creators are not buried by mega creators' raw view counts.
 
 **Flags** are shown for human review and are not part of the score:
 
@@ -270,7 +270,7 @@ There is no labelled ground truth for "good matches", so the project uses two me
 - **Commenter privacy.** Only aggregated comment statistics are stored. Commenter identities are never saved.
 - **Honest labelling.** Every metric is marked `measured` or `inferred`. No sensitive attributes, such as age, gender, religion, or health, are inferred about any individual.
 - **Prompt-injection resistance.** Scraped text (bios, captions, comments, website copy) is returned in clearly separated fields. Hard filters and scores are computed deterministically and cannot be changed by text in that content.
-- **Fairness across tiers.** Performance is compared within tiers, so smaller creators are not buried by large accounts.
+- **Fairness across tiers.** Performance uses ratios (per impression, per follower), not raw counts, so smaller creators are not buried by large accounts.
 - **Human decision.** The tool recommends and explains; the influencer team makes the final choice.
 - **Cost guardrails.** Per-call limits and cache-first access prevent runaway scraping costs from AI agents.
 - **Platform terms.** Third-party scraping carries terms-of-service risk. TikTok's Research API is restricted to non-commercial academic research. The production path is an official partner integration, such as the TikTok Creator Marketplace API, which also provides first-party audience demographics.
