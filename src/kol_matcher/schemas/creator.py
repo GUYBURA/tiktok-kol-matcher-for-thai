@@ -3,6 +3,8 @@ from enum import StrEnum
 
 from pydantic import BaseModel, Field
 
+from kol_matcher.schemas.scoring import Flag
+
 
 class Tier(StrEnum):
     nano = "nano"
@@ -66,3 +68,16 @@ class Discovery(BaseModel):
     errors: dict[str, str] = {}           # query -> error message
     videos_seen: int = 0
     non_thai_filtered: int = 0            # creators dropped by the Thai filter
+
+
+class EnrichedCreator(BaseModel):
+    """A creator with their recent profile videos (newest first) and flags for human review."""
+    creator: Creator
+    videos: list[Video]
+    flags: list[Flag] = []
+
+
+class Enrichment(BaseModel):
+    creators: list[EnrichedCreator]           # active creators, in input order
+    inactive: list[EnrichedCreator] = []      # hard-filtered: no post within INACTIVE_DAYS
+    errors: dict[str, str] = {}               # handle -> error message

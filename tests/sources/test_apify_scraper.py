@@ -355,3 +355,46 @@ def test_comments_video_cap(con, fake_apify):
         fetch_comments(con, settings(), too_many)
     assert fetch_comments(con, settings(), []) == []
     assert calls == []
+
+
+def test_concurrent_actor_runs_capped(con, monkeypatch):
+    """Many threads, limit 2: never more than 2 Apify runs active at once; the rest wait, none fail."""
+    import threading
+    import time
+    from concurrent.futures import ThreadPoolExecutor
+
+    active, peak, lock = 0, 0, threading.Lock()
+
+    class SlowActor:
+        def call(self, **_kwargs):
+            nonlocal active, peak
+            with lock:
+                active += 1
+                peak = max(peak, active)
+            time.sleep(0.05)
+            with lock:
+                active -= 1
+            return SimpleNamespace(default_dataset_id="ds")
+
+    class Client:
+        def __init__(self, _token):
+            pass
+
+        def actor(self, _actor):
+            return SlowActor()
+
+        def dataset(self, _id):
+            return SimpleNamespace(list_items=lambda: SimpleNamespace(items=[{"x": 1}]))
+
+    monkeypatch.setattr(apify_scraper, "ApifyClient", Client)
+    s = settings()
+    s.apify_max_concurrent_runs = 2
+
+    def one(i):
+        with con.cursor() as cur:
+            return run_actor(cur, s, "actor", {"i": i})
+
+    with ThreadPoolExecutor(max_workers=8) as pool:
+        results = list(pool.map(one, range(8)))
+    assert peak == 2
+    assert results == [[{"x": 1}]] * 8

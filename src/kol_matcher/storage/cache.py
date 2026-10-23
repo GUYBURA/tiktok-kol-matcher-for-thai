@@ -1,6 +1,8 @@
 import json
 from datetime import datetime, timedelta
+
 from kol_matcher.schemas import stable_hash
+
 
 def put(con, actor: str, input: dict, payload) -> None:
     con.execute(

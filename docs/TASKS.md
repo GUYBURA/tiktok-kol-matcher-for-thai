@@ -43,7 +43,7 @@ Order follows dependencies. Each task has a "done when" check.
 
 - [x] **T4.1** `analyze_brand`: collect, clean, return data + `BrandProfile` schema
 - [x] **T4.2** Discover: run queries, Thai filter (Unicode regex on bio/captions, region), dedupe, record source query, enforce `MAX_RESULTS_PER_QUERY`
-- [ ] **T4.3** Enrich: recent videos, tier assignment, inactive filter (60 days)
+- [x] **T4.3** Enrich: recent videos, tier assignment, inactive filter (60 days)
 - [ ] **T4.4** Features
   - [ ] Relevance: top-3 mean cosine + on-theme share
   - [ ] Performance: median ER, views/follower, percentile within tier

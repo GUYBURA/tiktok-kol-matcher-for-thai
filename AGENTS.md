@@ -62,7 +62,7 @@ The server enforces everything that must stay consistent: data collection, Thai-
 |---|---|---|
 | `analyze_brand` | `facebook_url?`, `website_url?` | Cleaned page details, recent posts, website text, and the `BrandProfile` JSON Schema for the AI client to fill in |
 | `search_creators` | `profile`, `queries[]?` | Thai candidates, the query that found each one, and `profile_hash`. Without `queries`, the profile's keywords and hashtags are used. |
-| `evaluate_creators` | `profile`, `handles[]`, `objective` | Ranking, score breakdown, metrics, evidence clips, flags, and `profile_hash` (up to 50 creators per call) |
+| `evaluate_creators` | `profile`, `handles[]`, `objective` | Ranking, score breakdown, metrics, evidence clips, flags, and `profile_hash` (up to 20 creators per call, configurable) |
 | `get_creator_detail` | `handle` | Recent captions, clips, and raw metrics from the cache |
 | `save_shortlist` | `profile`, `handles[]`, `objective`, `notes?` | A CSV built from server data. The selection is written to the shortlist log. |
 
@@ -186,7 +186,7 @@ EMBEDDING_PROVIDER=ollama
 OLLAMA_BASE_URL=http://localhost:11434
 EMBEDDING_MODEL=bge-m3
 MAX_RESULTS_PER_QUERY=30
-MAX_CREATORS_PER_EVALUATE=50
+MAX_CREATORS_PER_EVALUATE=20
 ```
 
 ### Connect to Claude Desktop
