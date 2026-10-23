@@ -1,0 +1,18 @@
+{
+  "brand_name": "Example Running Co.",
+  "category": "sportswear",
+  "products": ["running shoes for beginners"],
+  "price_tier": "mid",
+  "target_audience": "Thai adults aged 25-40 who are starting to run",
+  "tone": "encouraging, practical",
+  "content_themes": [
+    "beginner running training",
+    "choosing running shoes",
+    "healthy active lifestyle"
+  ],
+  "keywords_th": ["วิ่งมือใหม่", "รองเท้าวิ่ง", "ซ้อมวิ่ง"],
+  "keywords_en": ["beginner running", "running shoes"],
+  "hashtags": ["#วิ่ง", "#runnerth"],
+  "competitors": [],
+  "target_tiers": ["micro", "mid"]
+}

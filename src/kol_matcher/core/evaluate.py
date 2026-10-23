@@ -20,8 +20,8 @@ from kol_matcher.schemas.scoring import Objective
 from kol_matcher.sources import apify_scraper
 
 # Comments are the most expensive actor, so they are fetched only for conversion, and only for the
-# top creators: 5 creators x 2 videos = 10 videos = one comments run (MAX_COMMENT_VIDEOS).
-COMMENT_CREATORS = 5
+# top creators shown to the user: 3 creators x 2 videos = 6 videos = one comments run.
+COMMENT_CREATORS = 3
 COMMENT_VIDEOS_PER_CREATOR = 2
 
 

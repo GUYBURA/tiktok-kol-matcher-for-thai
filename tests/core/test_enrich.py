@@ -30,7 +30,7 @@ def con():
 
 
 @pytest.fixture
-def profiles(monkeypatch):
+def profiles(monkeypatch, as_batch):
     """Map handle -> items (or an Exception). Records the handles fetched."""
     calls = []
 
@@ -41,7 +41,7 @@ def profiles(monkeypatch):
             if isinstance(r, Exception):
                 raise r
             return r
-        monkeypatch.setattr(enrich_mod.apify_scraper, "fetch_profile_videos", fetch)
+        monkeypatch.setattr(enrich_mod.apify_scraper, "fetch_profile_videos", as_batch(fetch))
         return calls
 
     return install

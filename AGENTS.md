@@ -62,7 +62,7 @@ The server enforces everything that must stay consistent: data collection, Thai-
 |---|---|---|
 | `analyze_brand` | `facebook_url?`, `website_url?` | Cleaned page details, recent posts, website text, and the `BrandProfile` JSON Schema for the AI client to fill in |
 | `search_creators` | `profile`, `queries[]?` | Thai candidates, the query that found each one, and `profile_hash`. Without `queries`, the profile's keywords and hashtags are used. |
-| `evaluate_creators` | `profile`, `handles[]`, `objective`, `top_n?` | Top `top_n` (default 5) creators in full: score breakdown, metrics, evidence clips, flags. The rest of the ranking as handles and scores, plus `profile_hash`. Evaluate 10-20 handles per call (at most 20, configurable). |
+| `evaluate_creators` | `profile`, `handles[]`, `objective`, `top_n?` | Top `top_n` (default 3) creators in full: score breakdown, metrics, evidence clips, flags. The rest of the ranking as handles and scores, plus `profile_hash`. Evaluate up to 5 handles per call (configurable). |
 | `get_creator_detail` | `handle` | Recent captions, clips, and raw metrics from the cache |
 | `save_shortlist` | `profile`, `handles[]`, `objective`, `notes?` | A CSV built from server data. The selection is written to the shortlist log. |
 
@@ -186,7 +186,7 @@ EMBEDDING_PROVIDER=ollama
 OLLAMA_BASE_URL=http://localhost:11434
 EMBEDDING_MODEL=bge-m3
 MAX_RESULTS_PER_QUERY=30
-MAX_CREATORS_PER_EVALUATE=20
+MAX_CREATORS_PER_EVALUATE=5
 ```
 
 ### Connect to Claude Desktop

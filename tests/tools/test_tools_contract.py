@@ -44,7 +44,7 @@ PROFILES = {
 
 
 @pytest.fixture(autouse=True)
-def fakes(tmp_path, monkeypatch):
+def fakes(tmp_path, monkeypatch, as_batch):
     con = connect(":memory:")
     context.configure(con, Settings(_env_file=None, shortlist_dir=str(tmp_path / "shortlists")))
     calls = {"comments": []}
@@ -53,8 +53,8 @@ def fakes(tmp_path, monkeypatch):
     monkeypatch.setattr(apify_scraper, "fetch_facebook_posts", lambda c, s, url: [{"text": "โปร 1 แถม 1"}])
     monkeypatch.setattr(web_scraper, "fetch_website", lambda c, s, url: "เสื้อยืดผ้านุ่ม")
     monkeypatch.setattr(apify_scraper, "search_tiktok",
-                        lambda c, s, q: [clip("mint", "11", fans=90_000), clip("bank", "21", bio="ร้านของเรา")])
-    monkeypatch.setattr(apify_scraper, "fetch_profile_videos", lambda c, s, h: PROFILES.get(h, []))
+                        as_batch(lambda c, s, q: [clip("mint", "11", fans=90_000), clip("bank", "21", bio="ร้านของเรา")]))
+    monkeypatch.setattr(apify_scraper, "fetch_profile_videos", as_batch(lambda c, s, h: PROFILES.get(h, [])))
 
     def fetch_comments(c, s, urls):
         calls["comments"].append(urls)
@@ -136,7 +136,7 @@ def test_evaluate_returns_top_n_in_full_and_the_rest_as_handles():
     assert "evidence" not in out["more"][0]
     assert all(x["profile_url"] == f"https://www.tiktok.com/@{x['handle']}" for x in out["creators"] + out["more"])
     default = call("evaluate_creators", {"profile": PROFILE, "handles": handles}).structured_content
-    assert len(default["creators"]) == 4 and default["more"] == []   # default top 5 covers all four
+    assert len(default["creators"]) == 3 and [m["rank"] for m in default["more"]] == [4]   # default top 3
 
 def test_evaluate_conversion_fetches_comments_once(fakes):
     out = call("evaluate_creators", {"profile": PROFILE, "handles": ["mint", "bank"], "objective": "conversion"}
@@ -206,3 +206,26 @@ def test_every_timestamp_has_a_timezone():
     assert {k for k, _ in found} >= {"created_at", "scraped_at", "saved_at"}
     naive = [(k, v) for k, v in found if not re.search(r"(Z|[+-]\d\d:\d\d)$", v)]
     assert naive == []
+
+
+def test_slow_call_answers_still_working_and_a_repeat_call_joins_the_same_job(monkeypatch, tmp_path, as_batch):
+    """Remote clients drop tool calls after ~60 s; a repeat call must not scrape again."""
+    import threading
+    context.configure(context._state["con"], Settings(_env_file=None, tool_wait_seconds=0.2,
+                                                      shortlist_dir=str(tmp_path)))
+    release, searches = threading.Event(), []
+
+    def slow_search(c, s, q):
+        searches.append(q)
+        release.wait(5)
+        return [clip("mint", "11", fans=90_000)]
+    monkeypatch.setattr(apify_scraper, "search_tiktok", as_batch(slow_search))
+    args = {"profile": PROFILE, "queries": ["เสื้อยืด"]}
+
+    first = call("search_creators", args, raise_on_error=False)
+    assert first.is_error and "still working" in first.content[0].text
+    release.set()
+    second = call("search_creators", args).structured_content
+    assert [c["handle"] for c in second["candidates"]] == ["mint"]
+    assert searches == ["เสื้อยืด"]                     # one scrape for both calls
+    assert context._jobs == {}                           # finished job is forgotten

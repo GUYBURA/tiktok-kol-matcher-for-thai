@@ -58,7 +58,7 @@ Order follows dependencies. Each task has a "done when" check.
 
 - [x] **T5.1** `analyze_brand`
 - [x] **T5.2** `search_creators`
-- [x] **T5.3** `evaluate_creators` (cap 20 handles, top 5 returned in full)
+- [x] **T5.3** `evaluate_creators` (cap 5 handles, top 3 returned in full)
 - [x] **T5.4** `get_creator_detail`
 - [x] **T5.5** `save_shortlist`
 - [x] **T5.6** Register all tools in `server.py`
@@ -66,8 +66,8 @@ Order follows dependencies. Each task has a "done when" check.
 
 ## Phase 6 — CLI + skill
 
-- [ ] **T6.1** CLI `analyze` and `match` wired to core
-- [ ] **T6.2** `skills/kol-matcher/SKILL.md`: workflow including confirm-profile step
+- [x] **T6.1** CLI `analyze` and `match` wired to core
+- [x] **T6.2** `skills/kol-matcher/SKILL.md`: workflow including confirm-profile step
 
 ## Phase 7 — Evals
 

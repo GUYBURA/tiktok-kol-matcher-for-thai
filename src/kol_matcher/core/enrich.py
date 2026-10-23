@@ -1,4 +1,3 @@
-from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, datetime, timedelta
 
 from pydantic import ValidationError
@@ -9,7 +8,6 @@ from kol_matcher.schemas.scoring import Flag, FlagType
 from kol_matcher.sources import apify_scraper
 
 INACTIVE_DAYS = 60
-MAX_PARALLEL_PROFILES = 10
 
 
 def normalize_handles(handles: list[str]) -> list[str]:
@@ -19,7 +17,7 @@ def normalize_handles(handles: list[str]) -> list[str]:
 def enrich(con, settings, handles: list[str], now: datetime | None = None) -> Enrichment:
     """Fetch each creator's recent videos, drop inactive creators, and store results in DuckDB.
 
-    At most settings.max_creators_per_evaluate handles per call (each one is an Apify run).
+    At most settings.max_creators_per_evaluate handles per call.
     A failed or empty profile is reported in `errors`; the rest still return.
     """
     handles = normalize_handles(handles)
@@ -30,21 +28,9 @@ def enrich(con, settings, handles: list[str], now: datetime | None = None) -> En
         raise ValueError(f"At most {limit} creators per call, got {len(handles)}")
     now = now or datetime.now(UTC)
 
-    def run(handle):
-        # A DuckDB connection must not be shared across threads; each thread gets its own cursor.
-        with con.cursor() as cur:
-            return apify_scraper.fetch_profile_videos(cur, settings, handle)
-
-    raw, errors = {}, {}
-    with ThreadPoolExecutor(max_workers=min(MAX_PARALLEL_PROFILES, len(handles))) as pool:
-        futures = {h: pool.submit(run, h) for h in handles}
-        for h, future in futures.items():
-            try:
-                raw[h] = future.result()
-            except ValueError:
-                raise
-            except Exception as e:  # noqa: BLE001 - one failed profile should not lose the others
-                errors[h] = f"{type(e).__name__}: {e}"
+    # Batched: several creators per Apify run; one failed run does not lose the others.
+    raw, errors = apify_scraper.fetch_profile_videos(con, settings, handles)
+    errors = dict(errors)
 
     active, inactive = [], []
     for h in handles:  # input order

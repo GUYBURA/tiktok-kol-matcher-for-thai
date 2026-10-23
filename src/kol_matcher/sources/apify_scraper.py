@@ -1,4 +1,5 @@
 import threading
+from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, datetime
 from decimal import Decimal
 
@@ -39,6 +40,14 @@ def run_actor(con, settings, actor:str, run_input:dict, max_items:int | None = N
     if hit is not None:
         return hit
     
+    items = _call_actor(settings, actor, run_input, max_items, fields)
+    cache.put(con, actor, run_input, items)
+    return items
+
+
+def _call_actor(settings, actor: str, run_input: dict, max_items: int | None,
+                fields: list[str] | None) -> list[dict]:
+    """One Apify run, no cache. Safe to call from worker threads (touches no DuckDB connection)."""
     if settings.apify_token is None:
         raise RuntimeError("APIFY_TOKEN is not set (required outside replay mode)")
     client = ApifyClient(settings.apify_token.get_secret_value())
@@ -53,8 +62,54 @@ def run_actor(con, settings, actor:str, run_input:dict, max_items:int | None = N
     items = client.dataset(run.default_dataset_id).list_items().items
     if fields:
         items = [{k: item.get(k) for k in fields} for item in items]
-    cache.put(con, actor, run_input, items)
     return items
+
+
+def _batched(con, settings, actor: str, keys: list[str], single_input, batch_input, key_of,
+             per_key: int, batch_size: int, fields: list[str]) -> tuple[dict[str, list[dict]], dict[str, str]]:
+    """Fetch many keys (queries or handles) in few Apify runs, cached per key.
+
+    Each actor start costs ~15-30 s and only a few runs fit in the memory cap, so one run per key
+    made a 20-creator evaluation take several minutes. Keys missing from the cache are sent
+    `batch_size` per run (runs in parallel); items are split back by `key_of` and cached under the
+    same single-key input as before, so cache hits do not depend on how keys were batched.
+    Returns (items per key, error per key).
+    """
+    results, errors, missing = {}, {}, []
+    for k in keys:
+        hit = cache.get(con, actor, single_input(k),
+                        max_age_hours=None if settings.replay_mode else settings.cache_ttl_hours)
+        if hit is not None:
+            results[k] = hit
+        elif settings.replay_mode:
+            errors[k] = f"Replay mode: no fixture for {actor} {k}"
+        else:
+            missing.append(k)
+    chunks = [missing[i:i + batch_size] for i in range(0, len(missing), batch_size)]
+    if not chunks:
+        return results, errors
+
+    def run(chunk):
+        return _call_actor(settings, actor, batch_input(chunk), per_key * len(chunk), [*fields, "searchQuery", "input"])
+
+    with ThreadPoolExecutor(max_workers=len(chunks)) as pool:
+        futures = [(chunk, pool.submit(run, chunk)) for chunk in chunks]
+        for chunk, future in futures:
+            try:
+                items = future.result()
+            except Exception as e:  # noqa: BLE001 - one failed run should not lose the other chunks
+                errors.update({k: f"{type(e).__name__}: {e}" for k in chunk})
+                continue
+            grouped: dict[str, list[dict]] = {k.casefold(): [] for k in chunk}
+            for item in items:
+                # A one-key run owns every item, even if the actor echoes the key differently.
+                key = chunk[0].casefold() if len(chunk) == 1 else (key_of(item) or "").casefold()
+                if key in grouped:
+                    grouped[key].append({f: item.get(f) for f in fields})
+            for k in chunk:
+                results[k] = grouped[k.casefold()][:per_key]
+                cache.put(con, actor, single_input(k), results[k])
+    return results, errors
     
 def _check_facebook_url(url: str):
     if not url.startswith(("https://www.facebook.com/", "https://facebook.com/", "https://m.facebook.com/")):
@@ -86,7 +141,7 @@ TIKTOK_FIELDS = [
     "isAd", "isSponsored", "hasTikTokShopProduct", "isPinned",
     "hashtags", "authorMeta",
 ]
-# Metadata only: no media downloads, no comments. Thai proxy so search results are localized.
+# Metadata only: no media downloads, no comments.
 TIKTOK_BASE_INPUT = {
     "shouldDownloadVideos": False,
     "shouldDownloadCovers": False,
@@ -94,25 +149,36 @@ TIKTOK_BASE_INPUT = {
     "shouldDownloadMusicCovers": False,
     "shouldDownloadSlideshowImages": False,
     "commentsPerPost": 0,
-    "proxyCountryCode": "TH",
 }
+# Thai proxy only for search, so results are localized. A profile's videos are the same from any
+# country, and the proxy is charged per item (~26% of the per-item price).
+SEARCH_EXTRA_INPUT = {"proxyCountryCode": "TH"}
+QUERIES_PER_RUN = 5
+PROFILES_PER_RUN = 10
 
 
-def search_tiktok(con, settings, query: str) -> list[dict]:
+def search_tiktok(con, settings, queries: list[str]) -> tuple[dict[str, list[dict]], dict[str, str]]:
+    """TikTok search results per query, QUERIES_PER_RUN queries per Apify run."""
     n = settings.max_results_per_query
-    return run_actor(con, settings, TIKTOK_ACTOR,
-                     {"searchQueries": [query], "resultsPerPage": n, **TIKTOK_BASE_INPUT},
-                     max_items=n, fields=TIKTOK_FIELDS)
+    base = {"resultsPerPage": n, **TIKTOK_BASE_INPUT, **SEARCH_EXTRA_INPUT}
+    return _batched(con, settings, TIKTOK_ACTOR, list(dict.fromkeys(queries)),
+                    single_input=lambda q: {"searchQueries": [q], **base},
+                    batch_input=lambda qs: {"searchQueries": qs, **base},
+                    key_of=lambda item: item.get("searchQuery"),
+                    per_key=n, batch_size=QUERIES_PER_RUN, fields=TIKTOK_FIELDS)
 
 
-def fetch_profile_videos(con, settings, handle: str) -> list[dict]:
-    handle = handle.strip().lstrip("@")
-    if not handle:
+def fetch_profile_videos(con, settings, handles: list[str]) -> tuple[dict[str, list[dict]], dict[str, str]]:
+    """Recent videos per creator, PROFILES_PER_RUN creators per Apify run."""
+    handles = [h.strip().lstrip("@") for h in handles]  # "@x" and "x" share one cache entry
+    if any(not h for h in handles):
         raise ValueError("Empty TikTok handle")
-    return run_actor(con, settings, TIKTOK_ACTOR,
-                     {"profiles": [handle], "resultsPerPage": VIDEOS_PER_PROFILE,
-                      "excludePinnedPosts": True, **TIKTOK_BASE_INPUT},
-                     max_items=VIDEOS_PER_PROFILE, fields=TIKTOK_FIELDS)
+    base = {"resultsPerPage": VIDEOS_PER_PROFILE, "excludePinnedPosts": True, **TIKTOK_BASE_INPUT}
+    return _batched(con, settings, TIKTOK_ACTOR, list(dict.fromkeys(handles)),
+                    single_input=lambda h: {"profiles": [h], **base},
+                    batch_input=lambda hs: {"profiles": hs, **base},
+                    key_of=lambda item: item.get("input") or (item.get("authorMeta") or {}).get("name"),
+                    per_key=VIDEOS_PER_PROFILE, batch_size=PROFILES_PER_RUN, fields=TIKTOK_FIELDS)
 
 
 TIKTOK_COMMENTS_ACTOR = "clockworks/tiktok-comments-scraper"
