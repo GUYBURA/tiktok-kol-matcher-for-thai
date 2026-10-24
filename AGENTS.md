@@ -265,7 +265,7 @@ First run, Srichand (38 known collaborators, K = 10, pool 20). Details in `evals
 | Setup | Recall@10 | Off-topic creators in top 10 | Consistency (3 runs) | Time | Cost |
 |---|---|---|---|---|---|
 | This server v1 (30 clips, no gate, pool 20) | 0.00 (0/38) | 2 (comedy, travel) | Deterministic on cache | ~18 s cached; cold not measured | $2.90 |
-| This server v2 (10 clips, relevance gate, pool 12) | 0.00 (0/38) | 5 flagged, ranked after on-topic | Deterministic on cache | <1 s cached | ~$1.35 cold |
+| This server v2 (10 clips, relevance gate, pool 12) | 0.00 (0/38) | 5 flagged, ranked after on-topic | Same data: identical. Fresh scrapes: 4-5 of 10 shared (search changes) | <1 s cached; 101-155 s cold | $1.35 |
 | This server v2, AI-proposed queries | 0.00 (0/38) | 3 flagged, ranked after on-topic | 1 run only | 116 s cold | $1.27 |
 | AI client + raw Apify tools (Claude) | 0.00 (0/38) | 0 | 1 run only (budget) | ~4 min | $1.02 |
 

@@ -142,3 +142,45 @@ Queries: `ราคาถูก เครื่องสำอางเซเว
 Conclusion for this proxy: with brand-mention ground truth, recall@K measures search overlap and is
 near zero for every setup tried (this server with either query source, and Claude with raw Apify).
 A useful next eval needs either many more queries per brand or a labelled pool (people rating fit).
+
+### Consistency: this server, 3 runs from a fresh scrape
+
+Same profile and settings (v2, default queries, pool 12, K 10). Run 1 searched in the morning;
+runs 2 and 3 each used a new empty cache a few hours later, two minutes apart. $2.70 for runs 2-3.
+
+| | Runs 1-2 | Runs 1-3 | Runs 2-3 |
+|---|---|---|---|
+| Thai creators found by both searches | 87 of 158 | 67 of 172 | 74 of 164 |
+| Same creators in the evaluated pool of 12 | 5 | 6 | 7 |
+| Same creators in the top 10 | 4 | 5 | 5 |
+| Score change for a creator ranked in both | max 0.054 | max 0.054 | 0.000 |
+
+In all three top 10s: `amykitiya`, `aum_aemmika19`, `pimchqnoz`.
+
+- **Scoring is stable; search is not.** A creator scraped minutes apart gets the same score; hours
+  apart, within 0.05 (new views and likes). But TikTok returns a different half of the results to
+  the same query a few hours later, so the pool of 12 changes, and with it the top 10.
+- **Small pool amplifies it.** Only the first 12 of ~120 found are evaluated. A larger pool, or
+  reusing the cached search within a campaign (the default 24 h cache does this), would steady it.
+- Same-data reruns (cached) are identical, which is what makes a saved shortlist reproducible.
+
+### Fact-check of the raw-Apify baseline's claims
+
+Each claim in the baseline's table checked against the creators' 6 latest clips (the sample the
+baseline said it used), scraped a few hours after the baseline run. Like rate = likes / views.
+
+| Claim type | Correct | Wrong | Not found | Partly |
+|---|---|---|---|---|
+| Followers (10) | 10 | 0 | 0 | 0 |
+| Other claims (17) | 10 | 3 | 3 | 1 |
+
+- **Wrong:** like rates for `ceo.kalmandkind` ("5-9%", measured 3.3-6.8%), `maiimust_makeup` ("~9%",
+  avg 5.1%), `jueqmolpan` ("~9%", avg 15.4%).
+- **Not found:** three single-video figures (`amnotmyhair` 932K views, `janenemail_` 1.5M views,
+  `tnimptrsn` 553K views) are not among their latest 10 clips, nor 30 for `amnotmyhair`. They may be
+  older search results; they cannot be verified from what the baseline reported.
+- **Partly:** `aum_aemmika19` like rate "7-10%" (measured 2.8-22.5%, avg 13%).
+- Errors cluster in the three creators the baseline ranked from search results without opening
+  their profiles. Sponsored-content and competitor claims all held up.
+- This server does not produce such claims: every figure it returns is computed from stored
+  scrapes, and `save_shortlist` recomputes them.
