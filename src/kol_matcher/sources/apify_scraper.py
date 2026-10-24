@@ -223,7 +223,7 @@ def parse_video(item: dict) -> Video:
 
 
 def parse_creator(item: dict) -> Creator:
-    author = item["authorMeta"]
+    author = item.get("authorMeta") or {}   # null for some items (deleted or region-locked)
     followers = author.get("fans") or 0
     return Creator(
         handle=author["name"],
