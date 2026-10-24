@@ -222,3 +222,26 @@ Fact-check (latest 10 clips, or 30 where cached): followers 10/10 right; of 17 o
 - **Baseline figures across 3 rounds:** followers 30/30 right; other figures 24 right, 7 partly,
   3 wrong (round 1 like rates), 12 not verifiable from recent clips. Its weak spots are like-rate
   ranges and single-video claims; this server's figures are computed, not reported.
+
+### Tried: choosing the pool by caption relevance (not shipped)
+
+Simulated on the three runs' cached searches ($0): instead of the first 12 in search order, pick by
+how well each candidate's search-result captions match the brand themes.
+
+| Pool of 12 chosen by | Overlap per pair of runs | In all 3 pools | What it picked |
+|---|---|---|---|
+| Search order (current) | 5, 6, 7 (50%) | 4 | Mostly known beauty creators |
+| Best caption similarity | 8, 5, 7 (56%) | 4 | Shops and tiny accounts with one on-theme clip |
+| Caption similarity >= 0.50, then search order | 6, 6, 5 (47%) | 4 | Similar to search order |
+| Caption similarity >= 0.55, then search order | 7, 6, 8 (58%) | 5 | Drops `ceo.kalmandkind`, `amykitiya`; lets a shop in |
+| Search order, pool of 20 | 12, 12, 13 (62%) | 10 | Superset of the current pool |
+
+One caption is too thin to judge a creator by, so caption-based selection buys little stability and
+costs quality. A larger pool is the better lever: 20 instead of 12 raises the creators shared by all
+three runs from 4 to 10, for ~$0.30 more per run (8 profiles x 10 clips). In real use the AI client
+picks the handles to evaluate after reading the candidates, which behaves like the baseline's
+selection, so this mostly matters for unattended runs (backtest, CLI `match`).
+
+Found on the way: Ollama's bge-m3 returns NaN for a few captions and fails the whole request (500).
+Fixed: such a batch is embedded one by one, a failing caption is retried cleaned, else it counts as
+no evidence (zero vector, not cached).
