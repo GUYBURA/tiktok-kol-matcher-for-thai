@@ -1,0 +1,47 @@
+{
+  "brand": "Srichand",
+  "profile_hash": "df56c2fabcec40a9",
+  "objective": "engagement",
+  "k": 10,
+  "queries": [
+    "แป้งคุมมัน",
+    "รีวิวรองพื้น",
+    "แต่งหน้าเซเว่น",
+    "drugstore makeup thailand",
+    "#รีวิวเครื่องสำอาง",
+    "#แต่งหน้า"
+  ],
+  "excluded_queries": [],
+  "ground_truth": 38,
+  "discovered": 123,
+  "evaluated": 11,
+  "gt_discovered": [
+    "echopwt"
+  ],
+  "gt_ranked": [],
+  "gt_ranks": [],
+  "seeded": [],
+  "top_k": [
+    "amnotmyhair",
+    "ceo.kalmandkind",
+    "superthankky168",
+    "timyroutine",
+    "amykitiya",
+    "aum_aemmika19",
+    "pimchqnoz",
+    "bboom_chr",
+    "mayje1991",
+    "bunyaporn_2009"
+  ],
+  "hits": [],
+  "recall_at_k": 0.0,
+  "discovery_order_hits": 0,
+  "random_hits": 0.0,
+  "seconds": 0.8,
+  "apify_runs": 0,
+  "apify_items": 0,
+  "est_cost_usd": 0.0,
+  "errors": {
+    "mars.tinn_makeup101": "No videos returned (private, banned, or nonexistent account)"
+  }
+}

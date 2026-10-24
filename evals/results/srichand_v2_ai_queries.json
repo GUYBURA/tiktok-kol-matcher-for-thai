@@ -1,0 +1,47 @@
+{
+  "brand": "Srichand",
+  "profile_hash": "df56c2fabcec40a9",
+  "objective": "engagement",
+  "k": 10,
+  "queries": [
+    "ราคาถูก เครื่องสำอางเซเว่น แต่งหน้าง่ายๆ",
+    "รีวิวแป้งฝุ่นคุมมัน รองพื้นคุมมัน",
+    "#เครื่องสำอางราคาประหยัด",
+    "สกินแคร์ผิวมัน อากาศร้อน",
+    "แต่งหน้าไปเรียน ไปทำงาน มือใหม่",
+    "#รีวิวเครื่องสำอางดรักสโตร์"
+  ],
+  "excluded_queries": [],
+  "ground_truth": 38,
+  "discovered": 141,
+  "evaluated": 11,
+  "gt_discovered": [
+    "echopwt"
+  ],
+  "gt_ranked": [],
+  "gt_ranks": [],
+  "seeded": [],
+  "top_k": [
+    "natup7742",
+    "superthankky168",
+    "kkreviewaroundtheworld",
+    "eb.bahboh",
+    "pop.lolipop8",
+    "realametrine",
+    "myspoyy",
+    "p.phetlad_axx",
+    "ford.phawat",
+    "soundtiss"
+  ],
+  "hits": [],
+  "recall_at_k": 0.0,
+  "discovery_order_hits": 0,
+  "random_hits": 0.0,
+  "seconds": 116.3,
+  "apify_runs": 3,
+  "apify_items": 280,
+  "est_cost_usd": 1.273,
+  "errors": {
+    "mars.tinn_makeup101": "No videos returned (private, banned, or nonexistent account)"
+  }
+}

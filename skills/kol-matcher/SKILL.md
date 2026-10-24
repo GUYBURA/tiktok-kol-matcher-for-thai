@@ -64,6 +64,8 @@ For the top creators, check that the `evidence` clips actually fit the brand. Us
 - `brand_safety`, `competitor_mention`: raise these with the user explicitly.
 - `self_declared_expertise`: the title is from the bio and is **unverified**; say so.
 - `high_sponsored_ratio`, `shop_account`: may reduce authenticity; mention it.
+- `low_relevance`: few clips match the brand themes, so the creator is ranked after on-topic ones
+  even with a higher total. Recommend them only for pure reach, and say why.
 - `work_restriction`: the bio limits what work they accept (e.g. "ไม่รับรีวิวสกินแคร์"); check it
   against the brand before recommending.
 

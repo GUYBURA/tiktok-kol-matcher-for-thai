@@ -144,7 +144,8 @@ def test_all_queries_failing_raises(con, fake_search):
 
 def test_malformed_items_skipped(con, fake_search):
     broken = {"id": "9", "text": "เสื้อ"}  # no authorMeta / url
-    fake_search({"q": [broken, item("mint", "1", "เสื้อ")]})
+    null_author = {**item("gone", "8", "เสื้อ"), "authorMeta": None}  # seen live from Apify
+    fake_search({"q": [broken, null_author, item("mint", "1", "เสื้อ")]})
     result = discover(con, settings(), PROFILE, ["q"])
     assert [c.creator.handle for c in result.candidates] == ["mint"]
     assert result.videos_seen == 1

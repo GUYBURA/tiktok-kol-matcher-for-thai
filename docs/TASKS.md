@@ -71,9 +71,9 @@ Order follows dependencies. Each task has a "done when" check.
 
 ## Phase 7 — Evals
 
-- [ ] **T7.1** Ground-truth CSV for one Thai brand with past collaborations
-- [ ] **T7.2** `backtest` command: recall@K, brand name excluded from queries
-- [ ] **T7.3** Baseline (AI client + raw Apify) and query-source experiment; fill TBD table
+- [x] **T7.1** Ground-truth CSV for one Thai brand with past collaborations
+- [x] **T7.2** `backtest` command: recall@K, brand name excluded from queries
+- [x] **T7.3** Baseline (AI client + raw Apify) and query-source experiment; fill TBD table
 
 ## Phase 8 — Tests + ship
 

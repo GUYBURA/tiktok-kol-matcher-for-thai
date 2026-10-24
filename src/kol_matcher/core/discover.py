@@ -43,7 +43,7 @@ def discover(con, settings, profile: BrandProfile, queries: list[str] | None = N
             except (KeyError, TypeError, ValidationError):
                 continue  # malformed item from the scraper
             videos_seen += 1
-            if not _is_thai(item, creator.bio, video.caption):
+            if not is_thai_item(item, creator.bio, video.caption):
                 non_thai.add(creator.handle)
                 continue
             cand = candidates.setdefault(creator.handle, Candidate(creator=creator, found_by=[], videos=[]))
@@ -64,6 +64,6 @@ def discover(con, settings, profile: BrandProfile, queries: list[str] | None = N
     )
 
 
-def _is_thai(item: dict, bio: str, caption: str) -> bool:
+def is_thai_item(item: dict, bio: str, caption: str) -> bool:
     # ponytail: script-based, a non-Thai creator writing Thai captions passes; add region data if one appears
     return item.get("textLanguage") == "th" or has_thai(bio) or has_thai(caption)

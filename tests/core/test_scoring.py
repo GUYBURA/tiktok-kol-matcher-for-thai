@@ -1,6 +1,14 @@
 import pytest
 
-from kol_matcher.core.scoring import ANCHORS, log_scale, rank, scale, score
+from kol_matcher.core.scoring import (
+    ANCHORS,
+    MIN_RELEVANCE,
+    is_relevant,
+    log_scale,
+    rank,
+    scale,
+    score,
+)
 from kol_matcher.schemas.creator import CommentStats, CreatorFeatures, Tier
 from kol_matcher.schemas.scoring import WEIGHTS, Objective
 
@@ -114,9 +122,9 @@ def test_rank_order_and_tie_break():
 
 
 def test_objective_changes_order():
-    # reach:  relevance mean(0.17, 0.2) = 0.18, performance mean(0.4, 1.0) = 0.70
+    # reach:  relevance mean(0.33, 0.3) = 0.32 (above the gate), performance mean(0.4, 1.0) = 0.70
     # brand:  relevance mean(0.73, 0.7) = 0.72, performance mean(0.4, 0.15) = 0.28
-    reach_star = feats("reach", top3=0.45, on_theme=0.2, er=4.0, ipf=1.5)
+    reach_star = feats("reach", top3=0.50, on_theme=0.3, er=4.0, ipf=1.5)
     on_brand = feats("brand", top3=0.62, on_theme=0.7, er=4.0, ipf=0.02)
     assert rank([reach_star, on_brand], Objective.awareness)[0][0].handle == "reach"
     assert rank([reach_star, on_brand], Objective.engagement)[0][0].handle == "brand"
@@ -125,3 +133,13 @@ def test_objective_changes_order():
 def test_anchors_documented():
     assert set(ANCHORS) == {"relevance_top3", "er_by_impression", "impressions_per_follower",
                             "purchase_intent_rate", "days_since_post"}
+
+
+def test_low_relevance_ranks_after_on_topic_whatever_the_total():
+    # off: relevance mean(0.17, 0.2) = 0.18 < MIN_RELEVANCE, huge performance
+    off_topic = feats("off", top3=0.45, on_theme=0.2, er=10.0, ipf=1.5)
+    on_topic = feats("on", top3=0.55, on_theme=0.3, er=1.0, ipf=0.02)
+    ranked = rank([off_topic, on_topic], Objective.awareness)
+    assert score(off_topic, Objective.awareness).total > score(on_topic, Objective.awareness).total
+    assert [f.handle for f, _ in ranked] == ["on", "off"]
+    assert not is_relevant(ranked[1][1]) and ranked[1][1].relevance.value < MIN_RELEVANCE

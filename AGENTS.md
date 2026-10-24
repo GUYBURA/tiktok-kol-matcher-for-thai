@@ -116,6 +116,8 @@ The final score is a weighted sum. Weights depend on the campaign objective:
 
 These are initial weights, tuned with the backtest in `evals/`.
 
+**Relevance gate:** creators with relevance below 0.25 rank after every on-topic creator, whatever their total, and carry a `low_relevance` flag. Without it, large off-topic accounts (comedy, travel) reached the top 10 on performance alone. Each creator is measured on their 10 most recent clips.
+
 **Tiers:** nano (<10K followers), micro (10K-100K), mid (100K-500K), macro (500K-1M), mega (1M+). Both scored performance metrics are ratios (per impression, per follower), so micro creators are not buried by mega creators' raw view counts.
 
 **Flags** are shown for human review and are not part of the score:
@@ -125,6 +127,7 @@ These are initial weights, tuned with the backtest in `evals/`.
 - **Competitor mention:** recent captions mention a brand listed in `competitors`.
 - **Self-declared expertise:** professional titles in the bio (e.g. นพ., พญ., ภก., Dr.), labelled *unverified*.
 - **High sponsored ratio:** a large share of recent posts are ads.
+- **Low relevance:** few clips match the brand themes; ranked after on-topic creators (see the relevance gate).
 
 Each result includes a short rationale generated from templates over the computed features, for example: *"72% of clips match 'beginner running training'; engagement rate above 85% of micro creators."*
 
@@ -257,11 +260,14 @@ There is no labelled ground truth for "good matches", so the project uses two me
 - **Baseline comparison:** run the same brief with an AI client connected only to raw Apify tools, then compare recall@K, consistency across three runs, time, and cost.
 - **Query-source experiment:** compare default profile queries with AI-proposed queries, using three runs to measure variance.
 
-| Setup | Recall@20 | Consistency (3 runs) | Time | Cost |
-|---|---|---|---|---|
-| This server, default queries | TBD | TBD | TBD | TBD |
-| This server, AI-proposed queries | TBD | TBD | TBD | TBD |
-| AI client + raw Apify tools | TBD | TBD | TBD | TBD |
+First run, Srichand (38 known collaborators, K = 10, pool 20). Details in `evals/README.md`.
+
+| Setup | Recall@10 | Off-topic creators in top 10 | Consistency (3 runs) | Time | Cost |
+|---|---|---|---|---|---|
+| This server v1 (30 clips, no gate, pool 20) | 0.00 (0/38) | 2 (comedy, travel) | Deterministic on cache | ~18 s cached; cold not measured | $2.90 |
+| This server v2 (10 clips, relevance gate, pool 12) | 0.00 (0/38) | 5 flagged, ranked after on-topic | Same data: identical. Fresh scrapes: 4-5 of 10 shared (search changes) | <1 s cached; 101-155 s cold | $1.35 |
+| This server v2, AI-proposed queries | 0.00 (0/38) | 3 flagged, ranked after on-topic | 1 run only | 116 s cold | $1.27 |
+| AI client + raw Apify tools (Claude) | 0.00 (0/38) | 0 | Fresh runs: 5-8 of 10 shared; 3 wrong and 12 unverifiable figures of 46 | 3-4 min | $0.86-1.15 |
 
 ## Ethics and privacy
 

@@ -29,6 +29,11 @@ def _run_slots(limit: int) -> threading.BoundedSemaphore:
         return _slots.setdefault(limit, threading.BoundedSemaphore(limit))
 
 
+# One entry per live Apify run (cache hits add nothing), so a caller can measure what a job cost:
+# take len(usage) before, read usage[n:] after.
+usage: list[dict] = []
+
+
 def run_actor(con, settings, actor:str, run_input:dict, max_items:int | None = None, fields: list[str] | None = None) -> list[dict]:
     if settings.replay_mode:
         hit = cache.get(con, actor, run_input, max_age_hours=None)
@@ -62,6 +67,8 @@ def _call_actor(settings, actor: str, run_input: dict, max_items: int | None,
     items = client.dataset(run.default_dataset_id).list_items().items
     if fields:
         items = [{k: item.get(k) for k in fields} for item in items]
+    with _slots_lock:
+        usage.append({"actor": actor, "items": len(items), "proxy": "proxyCountryCode" in run_input})
     return items
 
 
@@ -133,7 +140,9 @@ def fetch_facebook_posts(con, settings, url: str) -> list[dict]:
 
 
 TIKTOK_ACTOR = "clockworks/tiktok-scraper"
-VIDEOS_PER_PROFILE = 30
+# 10 recent clips: the Srichand backtest ranked about as well with 10 as with 30 (evals/README.md),
+# and profile scrapes were ~70% of the cost.
+VIDEOS_PER_PROFILE = 10
 MAX_CAPTION_CHARS = 500
 TIKTOK_FIELDS = [
     "id", "text", "textLanguage", "createTimeISO", "webVideoUrl",
@@ -216,7 +225,7 @@ def parse_video(item: dict) -> Video:
 
 
 def parse_creator(item: dict) -> Creator:
-    author = item["authorMeta"]
+    author = item.get("authorMeta") or {}   # null for some items (deleted or region-locked)
     followers = author.get("fans") or 0
     return Creator(
         handle=author["name"],

@@ -1,0 +1,19 @@
+{
+  "brand_name": "Srichand",
+  "category": "cosmetics and skincare",
+  "products": ["translucent setting powder", "foundation", "sunscreen", "skincare essence"],
+  "price_tier": "mid",
+  "target_audience": "Thai students and working adults aged 18-35 who buy affordable makeup at convenience stores",
+  "tone": "friendly, practical, proudly Thai",
+  "content_themes": [
+    "everyday makeup tutorial",
+    "oil control powder and foundation review",
+    "affordable drugstore makeup",
+    "skincare for oily skin in hot weather"
+  ],
+  "keywords_th": ["แป้งคุมมัน", "รีวิวรองพื้น", "แต่งหน้าเซเว่น"],
+  "keywords_en": ["drugstore makeup thailand"],
+  "hashtags": ["#รีวิวเครื่องสำอาง", "#แต่งหน้า"],
+  "competitors": ["Mistine", "Cute Press"],
+  "target_tiers": []
+}
