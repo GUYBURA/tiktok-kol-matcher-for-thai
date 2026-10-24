@@ -108,7 +108,7 @@ for 14 creators), ~4 minutes, $1.02. Ranked list: `evals/results/baseline_1.txt`
 
 | Run | Ranked | Hits@10: ranker / random | Off-topic in top 10 | Apify |
 |---|---|---|---|---|
-| Default queries, pool 12 | 11 | 0 / 0 | 0 on-topic slots lost; the 2 gated creators fill ranks 10-11 only because the pool is 11 | $0 (cached; ~$0.45 cold) |
+| Default queries, pool 12 | 11 | 0 / 0 | 0 above on-topic creators (2 gated ones fill ranks 9-10 because only 11 were ranked) | $0 (cached; ~$0.45 cold) |
 | Same + 8 seeded ground truth | 19 | 4 / 4.21 | 0 | $0.71 |
 
 - **Cost:** 20 profiles cost $0.71 at 10 clips vs $2.00 at 30. A full cold run of this backtest
