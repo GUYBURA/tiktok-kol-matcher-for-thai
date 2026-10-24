@@ -49,6 +49,8 @@ class BacktestResult(BaseModel):
     evaluated: int                       # active creators ranked
     gt_discovered: list[str]             # ground truth found by search (ceiling for recall)
     gt_ranked: list[str]                 # ground truth among the ranked creators
+    gt_ranks: list[int] = []             # their ranks (1 = best)
+    seeded: list[str] = []               # ground truth added to the pool by hand (ranking-only test)
     top_k: list[str]
     hits: list[str]
     recall_at_k: float
@@ -145,7 +147,10 @@ def brand_queries(queries: list[str], brand_terms: list[str]) -> tuple[list[str]
 
 def run_backtest(con, settings, profile: BrandProfile, truth: list[str], k: int = 20, pool: int = 40,
                  objective: Objective = Objective.engagement, queries: list[str] | None = None,
-                 brand_terms: list[str] | None = None, exclude_handles: list[str] | None = None) -> BacktestResult:
+                 brand_terms: list[str] | None = None, exclude_handles: list[str] | None = None,
+                 seed: int = 0) -> BacktestResult:
+    """`seed` adds that many ground-truth creators search missed to the pool. Recall then no longer
+    measures search, but hits vs random shows whether scoring lifts known collaborators."""
     started, runs_before = time.perf_counter(), len(apify_scraper.usage)
     terms = [profile.brand_name, *(brand_terms or [])]
     kept, excluded = brand_queries(queries or discover.default_queries(profile)[:discover.MAX_QUERIES], terms)
@@ -157,6 +162,9 @@ def run_backtest(con, settings, profile: BrandProfile, truth: list[str], k: int 
     order = [c.creator.handle for c in found.candidates if c.creator.handle.casefold() not in skip]
     gt = {h.casefold() for h in truth}
     pool_handles = order[:pool]
+    in_pool = {h.casefold() for h in pool_handles}
+    seeded = [h for h in truth if h.casefold() not in in_pool and h.casefold() not in skip][:seed]
+    pool_handles += seeded
     errors = dict(found.errors)
 
     ranked: list[str] = []
@@ -177,6 +185,7 @@ def run_backtest(con, settings, profile: BrandProfile, truth: list[str], k: int 
         brand=profile.brand_name, profile_hash=profile_hash(profile), objective=objective.value, k=k,
         queries=kept, excluded_queries=excluded, ground_truth=len(gt), discovered=len(order),
         evaluated=len(ranked), gt_discovered=[h for h in order if h.casefold() in gt], gt_ranked=in_ranked,
+        gt_ranks=[i for i, h in enumerate(ranked, 1) if h.casefold() in gt], seeded=seeded,
         top_k=ranked[:k], hits=hits, recall_at_k=round(recall, 4),
         discovery_order_hits=len(recall_at_k(by_search, truth, k)[0]),
         random_hits=round(top * len(in_ranked) / len(ranked), 2) if ranked else 0.0,

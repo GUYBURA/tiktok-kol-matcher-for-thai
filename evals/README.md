@@ -59,3 +59,32 @@ times in fresh chats and run each set, to measure variance.
 - Brand mentions include fans and resellers; manual review of `keep` matters.
 - A creator who mentions the brand often also posts about its category, so recall partly measures
   niche match, which is the goal, but it is not proof of campaign performance.
+
+## Results: Srichand (2026-10-24)
+
+Profile `evals/profiles/srichand.json` (written by hand, as an AI client would; brand name never
+searched). Ground truth: 47 Thai creators mention Srichand; 9 dropped on review (brand accounts, an
+intern post, a Khon Kaen milk shop with the same Thai name, resellers, a fan post): **38 kept**.
+
+| Run | Pool | Ground truth in pool | Hits@10: ranker / search order / random | Apify |
+|---|---|---|---|---|
+| Default queries (6) | 20 of 123 found | 0 (search found 1 of 38) | 0 / 0 / 0 | $3.35 |
+| Same + 8 seeded ground-truth creators | 27 ranked | 8 | 3 / 0 / 2.96 | $0.89 |
+
+Findings:
+
+- **Discovery is the bottleneck.** Six generic beauty queries found 123 Thai creators, only one of
+  them a known collaborator. Recall@K is capped by search, not ranking.
+- **Ranking does not separate known collaborators from other beauty creators** (3 hits vs 2.96
+  random; their ranks 4, 6, 10, 20, 21, 24, 25, 27). Every creator in the pool is already a beauty
+  creator, and clip-to-theme similarity is flat across it (top-3 mean 0.49-0.59 for everyone), so
+  relevance barely moves the order and performance decides it.
+- **The proxy rewards what brands buy, not only fit.** Five of the eight collaborators post mostly
+  sponsored clips (sponsored ratio 0.70-0.73) with low engagement per view (1-2%), which the
+  credibility and performance scores penalise by design. "Who the brand hired" is not the same as
+  "who fits best", so a low score here is partly the intended authenticity check.
+- **Off-topic large creators rank high** (a comedy account at 8, a travel account at 12) on
+  performance alone. A minimum relevance gate before ranking would remove them.
+
+Eight seeded creators in a pool of 27 is too small to tune weights on without overfitting; treat
+these numbers as a diagnosis, not a benchmark.

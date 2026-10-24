@@ -145,6 +145,8 @@ def backtest(
     brand_term: Annotated[list[str] | None, typer.Option(help="Extra brand spellings; queries containing "
                                                             "any are dropped")] = None,
     exclude_handle: Annotated[list[str] | None, typer.Option(help="The brand's own TikTok accounts")] = None,
+    seed: Annotated[int, typer.Option(min=0, help="Add this many ground-truth creators to the pool "
+                                                   "(ranking-only test)")] = 0,
     out: Annotated[Path | None, typer.Option(help="Write the result JSON here")] = None,
     yes: Annotated[bool, typer.Option("--yes", help="Skip the cost prompt")] = False,
 ):
@@ -156,9 +158,10 @@ def backtest(
         truth = bt.load_ground_truth(ground_truth)
         kept, _ = bt.brand_queries(query or discover.default_queries(brand_profile)[:discover.MAX_QUERIES],
                                    [brand_profile.brand_name, *(brand_term or [])])
-        _confirm_spend(settings, len(kept), pool, yes)
+        _confirm_spend(settings, len(kept), pool + seed, yes)
         result = bt.run_backtest(con, settings, brand_profile, truth, k=k, pool=pool, objective=objective,
-                                 queries=query, brand_terms=brand_term, exclude_handles=exclude_handle)
+                                 queries=query, brand_terms=brand_term, exclude_handles=exclude_handle,
+                                 seed=seed)
     except (ValueError, RuntimeError) as e:
         _fail(e)
     finally:
@@ -169,6 +172,8 @@ def backtest(
                f"  hits@{k}: ranker {len(result.hits)}, search order {result.discovery_order_hits}, "
                f"random {result.random_hits}\n"
                f"  {result.seconds}s, {result.apify_runs} Apify runs, ~${result.est_cost_usd}")
+    if result.seeded:
+        typer.echo(f"  seeded {len(result.seeded)} ground-truth creators; ground-truth ranks: {result.gt_ranks}")
     if result.excluded_queries:
         typer.echo(f"  queries dropped (name the brand): {', '.join(result.excluded_queries)}")
     if out:

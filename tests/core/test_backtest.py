@@ -134,3 +134,15 @@ def test_max_cost_upper_bound():
     s = Settings(_env_file=None, max_results_per_query=30)
     cost = bt.max_cost_usd(s, n_queries=5, pool=10)
     assert cost == pytest.approx(5 * 30 * 0.005 + 10 * 30 * 0.0037 + 2 * 0.001, abs=0.01)
+
+
+def test_run_backtest_seed_adds_missed_ground_truth(con, monkeypatch, as_batch):
+    monkeypatch.setattr(apify_scraper, "search_tiktok",
+                        as_batch(lambda _c, _s, q: [item("s1", "1"), item("g1", "2")]))
+    monkeypatch.setattr(apify_scraper, "fetch_profile_videos", as_batch(
+        lambda _c, _s, h: [item(h, f"{h}{i}", likes=2000 if h.startswith("g") else 50) for i in range(3)]))
+    monkeypatch.setattr(embeddings, "embed", lambda c, s, texts: np.array([[1.0, 0.0] for _ in texts]))
+    result = bt.run_backtest(con, SETTINGS, PROFILE, ["g1", "g2", "g3"], k=2, pool=2, seed=1)
+    assert result.seeded == ["g2"]                  # g1 was already found; seed only adds missed ones
+    assert result.evaluated == 3
+    assert result.gt_ranks == [1, 2]
