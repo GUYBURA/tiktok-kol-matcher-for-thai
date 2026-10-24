@@ -8,6 +8,7 @@ import typer
 from kol_matcher.config import Settings
 from kol_matcher.core import backtest as bt
 from kol_matcher.core import brand, discover, evaluate, shortlist
+from kol_matcher.core.fixtures import build_fixtures
 from kol_matcher.schemas.brand import BrandProfile
 from kol_matcher.schemas.scoring import Objective
 from kol_matcher.storage.db import open_db
@@ -198,3 +199,22 @@ def score_list(
     hits, recall = bt.recall_at_k(ranked, truth, k)
     typer.echo(f"recall@{k} = {recall:.2f} ({len(hits)}/{len({h.casefold() for h in truth})}): "
                f"{', '.join(hits) or 'no hits'}")
+
+
+@app.command("export-fixtures")
+def export_fixtures_cmd(
+    profile: Annotated[Path, typer.Option(exists=True, dir_okay=False, help="BrandProfile JSON file")],
+    out: Annotated[Path, typer.Option(help="Fixture folder (FIXTURES_PATH for replay mode)")] = Path("fixtures"),
+):
+    """Export a profile's cached searches, creators, and embeddings as replay fixtures. No Apify calls."""
+    brand_profile = BrandProfile.model_validate_json(profile.read_text(encoding="utf-8"))
+    con, settings = _open()
+    settings = settings.model_copy(update={"cache_ttl_hours": EVAL_CACHE_HOURS})
+    try:
+        counts = build_fixtures(con, settings, brand_profile, str(out))
+    except (ValueError, RuntimeError) as e:
+        _fail(e)
+    finally:
+        con.close()
+    typer.echo(f"Saved {out}: {counts['searches']} searches, {counts['creators']} of {counts['creators_found']} "
+               f"creators with cached videos, {counts['embeddings']} embeddings.")

@@ -6,6 +6,7 @@ from kol_matcher.core.flags import account_flags
 from kol_matcher.schemas.creator import EnrichedCreator, Enrichment
 from kol_matcher.schemas.scoring import Flag, FlagType
 from kol_matcher.sources import apify_scraper
+from kol_matcher.storage.db import clock
 
 INACTIVE_DAYS = 60
 
@@ -26,7 +27,7 @@ def enrich(con, settings, handles: list[str], now: datetime | None = None) -> En
     limit = settings.max_creators_per_evaluate
     if len(handles) > limit:
         raise ValueError(f"At most {limit} creators per call, got {len(handles)}")
-    now = now or datetime.now(UTC)
+    now = now or clock(con, settings)
 
     # Batched: several creators per Apify run; one failed run does not lose the others.
     raw, errors = apify_scraper.fetch_profile_videos(con, settings, handles)

@@ -166,13 +166,24 @@ QUERIES_PER_RUN = 5
 PROFILES_PER_RUN = 10
 
 
+def search_input(settings, queries: list[str]) -> dict:
+    """Actor input for a TikTok search; with one query it is also the cache key for that query."""
+    return {"searchQueries": queries, "resultsPerPage": settings.max_results_per_query,
+            **TIKTOK_BASE_INPUT, **SEARCH_EXTRA_INPUT}
+
+
+def profile_input(handles: list[str]) -> dict:
+    """Actor input for creators' recent videos; with one handle it is also that creator's cache key."""
+    return {"profiles": handles, "resultsPerPage": VIDEOS_PER_PROFILE, "excludePinnedPosts": True,
+            **TIKTOK_BASE_INPUT}
+
+
 def search_tiktok(con, settings, queries: list[str]) -> tuple[dict[str, list[dict]], dict[str, str]]:
     """TikTok search results per query, QUERIES_PER_RUN queries per Apify run."""
     n = settings.max_results_per_query
-    base = {"resultsPerPage": n, **TIKTOK_BASE_INPUT, **SEARCH_EXTRA_INPUT}
     return _batched(con, settings, TIKTOK_ACTOR, list(dict.fromkeys(queries)),
-                    single_input=lambda q: {"searchQueries": [q], **base},
-                    batch_input=lambda qs: {"searchQueries": qs, **base},
+                    single_input=lambda q: search_input(settings, [q]),
+                    batch_input=lambda qs: search_input(settings, qs),
                     key_of=lambda item: item.get("searchQuery"),
                     per_key=n, batch_size=QUERIES_PER_RUN, fields=TIKTOK_FIELDS)
 
@@ -182,10 +193,9 @@ def fetch_profile_videos(con, settings, handles: list[str]) -> tuple[dict[str, l
     handles = [h.strip().lstrip("@") for h in handles]  # "@x" and "x" share one cache entry
     if any(not h for h in handles):
         raise ValueError("Empty TikTok handle")
-    base = {"resultsPerPage": VIDEOS_PER_PROFILE, "excludePinnedPosts": True, **TIKTOK_BASE_INPUT}
     return _batched(con, settings, TIKTOK_ACTOR, list(dict.fromkeys(handles)),
-                    single_input=lambda h: {"profiles": [h], **base},
-                    batch_input=lambda hs: {"profiles": hs, **base},
+                    single_input=lambda h: profile_input([h]),
+                    batch_input=profile_input,
                     key_of=lambda item: item.get("input") or (item.get("authorMeta") or {}).get("name"),
                     per_key=VIDEOS_PER_PROFILE, batch_size=PROFILES_PER_RUN, fields=TIKTOK_FIELDS)
 

@@ -18,6 +18,7 @@ from kol_matcher.schemas.creator import (
 )
 from kol_matcher.schemas.scoring import Flag, FlagType, Objective
 from kol_matcher.sources import apify_scraper
+from kol_matcher.storage.db import clock
 
 # Comments are the most expensive actor, so they are fetched only for conversion, and only for the
 # top creators shown to the user: 3 creators x 2 videos = 6 videos = one comments run.
@@ -28,7 +29,7 @@ COMMENT_VIDEOS_PER_CREATOR = 2
 def evaluate(con, settings, profile: BrandProfile, handles: list[str],
              objective: Objective = Objective.engagement, now: datetime | None = None) -> Evaluation:
     """Enrich, score, flag, and explain creators for one brand and objective. Ranked best first."""
-    now = now or datetime.now(UTC)
+    now = now or clock(con, settings)
     enriched = enrich(con, settings, handles, now=now)
     errors = dict(enriched.errors)
     pool = enriched.creators
