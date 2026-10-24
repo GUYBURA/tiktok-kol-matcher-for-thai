@@ -29,6 +29,11 @@ def _run_slots(limit: int) -> threading.BoundedSemaphore:
         return _slots.setdefault(limit, threading.BoundedSemaphore(limit))
 
 
+# One entry per live Apify run (cache hits add nothing), so a caller can measure what a job cost:
+# take len(usage) before, read usage[n:] after.
+usage: list[dict] = []
+
+
 def run_actor(con, settings, actor:str, run_input:dict, max_items:int | None = None, fields: list[str] | None = None) -> list[dict]:
     if settings.replay_mode:
         hit = cache.get(con, actor, run_input, max_age_hours=None)
@@ -62,6 +67,8 @@ def _call_actor(settings, actor: str, run_input: dict, max_items: int | None,
     items = client.dataset(run.default_dataset_id).list_items().items
     if fields:
         items = [{k: item.get(k) for k in fields} for item in items]
+    with _slots_lock:
+        usage.append({"actor": actor, "items": len(items), "proxy": "proxyCountryCode" in run_input})
     return items
 
 

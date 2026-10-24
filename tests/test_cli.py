@@ -107,3 +107,29 @@ def test_readme_example_profile_is_valid():
     from pathlib import Path
     path = Path(__file__).parent.parent / "fixtures" / "profiles" / "example.json"
     BrandProfile.model_validate_json(path.read_text(encoding="utf-8"))
+
+
+def test_score_list(tmp_path):
+    gt = tmp_path / "gt.csv"
+    gt.write_text("handle,keep\na1,y\nb2,n\nz9,y\n", encoding="utf-8")
+    ranked = tmp_path / "ranked.txt"
+    ranked.write_text("@c3\na1\n\nb2\n", encoding="utf-8")
+    result = runner.invoke(cli.app, ["score-list", "--ground-truth", str(gt), "--handles", str(ranked), "--k", "2"])
+    assert result.exit_code == 0, result.output
+    assert "recall@2 = 0.50 (1/2): a1" in result.stdout
+
+
+def test_backtest_prompts_for_cost_and_writes_json(profile_file, tmp_path):
+    gt = tmp_path / "gt.csv"
+    gt.write_text("handle\ng7\nf6\n", encoding="utf-8")
+    args = ["backtest", "--profile", str(profile_file), "--ground-truth", str(gt), "--k", "2", "--pool", "7"]
+    declined = runner.invoke(cli.app, args, input="n\n")
+    assert declined.exit_code == 1
+    assert "at most ~$" in declined.stderr
+
+    out = tmp_path / "res.json"
+    result = runner.invoke(cli.app, [*args, "--yes", "--out", str(out)])
+    assert result.exit_code == 0, result.output
+    data = json.loads(out.read_text(encoding="utf-8"))
+    assert data["hits"] == ["g7", "f6"]          # most likes in the fake profiles
+    assert "recall@2 = 1.00" in result.stdout
