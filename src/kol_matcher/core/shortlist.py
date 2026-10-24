@@ -12,6 +12,7 @@ from kol_matcher.core.stored import cached_comment_stats, load_creator
 from kol_matcher.schemas.brand import BrandProfile, profile_hash
 from kol_matcher.schemas.creator import Shortlist, ShortlistRow
 from kol_matcher.schemas.scoring import Flag, FlagType, Objective
+from kol_matcher.storage.db import clock
 
 MAX_SHORTLIST = 50
 
@@ -34,9 +35,10 @@ def save_shortlist(con, settings, profile: BrandProfile, handles: list[str],
     if missing:
         raise ValueError(f"Not in cache, run evaluate_creators first: {', '.join(missing)}")
 
-    now = now or datetime.now(UTC)
+    scored_at = now or clock(con, settings)   # replay: the fixtures' time, so scores match evaluate
+    now = now or datetime.now(UTC)            # when the file is saved
     by_handle = {e.creator.handle: e for e in pool}
-    features = pool_features(con, settings, profile, pool, now=now)
+    features = pool_features(con, settings, profile, pool, now=scored_at)
     for f in features:
         f.comment_stats = cached_comment_stats(con, f.handle)
 

@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import duckdb
@@ -102,6 +102,16 @@ def open_db(settings) -> duckdb.DuckDBPyConnection:
     con = connect(":memory:")
     load_fixtures(con, settings.fixtures_path)
     return con
+
+
+def clock(con, settings) -> datetime:
+    """The engine's "now". Replay mode uses the moment the fixtures were recorded, so recency
+    scores and the inactive filter give the same result however old the fixtures are."""
+    if settings.replay_mode:
+        latest = con.execute("SELECT max(fetched_at) FROM raw_responses").fetchone()[0]
+        if latest is not None:
+            return latest.replace(tzinfo=UTC)
+    return datetime.now(UTC)
 
 
 def export_fixtures(con, directory: str) -> None:
