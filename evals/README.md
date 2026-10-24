@@ -103,3 +103,19 @@ for 14 creators), ~4 minutes, $1.02. Ranked list: `evals/results/baseline_1.txt`
 - The baseline was cheaper ($1.02 vs $2.90; the other $0.45 of the $3.35 was the ground-truth search) because it sampled 6 videos per creator instead of 30.
   It is also not reproducible: no fixed scores, and three creators were ranked from search results
   without checking their profiles.
+
+### v2: 10 clips per creator, relevance gate 0.25, pool 12 (live, new Apify account)
+
+| Run | Ranked | Hits@10: ranker / random | Off-topic in top 10 | Apify |
+|---|---|---|---|---|
+| Default queries, pool 12 | 11 | 0 / 0 | 0 on-topic slots lost; the 2 gated creators fill ranks 10-11 only because the pool is 11 | $0 (cached; ~$0.45 cold) |
+| Same + 8 seeded ground truth | 19 | 4 / 4.21 | 0 | $0.71 |
+
+- **Cost:** 20 profiles cost $0.71 at 10 clips vs $2.00 at 30. A full cold run of this backtest
+  (6 searches + 12 profiles) is now ~$1.35, close to the raw-Apify baseline ($1.02).
+- **Off-topic:** gated creators (comedy, family vlog) now rank after every on-topic creator and
+  carry a `low_relevance` flag.
+- **Agreement with the baseline:** 4 of its top 10 are in ours (`amnotmyhair`, `ceo.kalmandkind`,
+  `amykitiya`, `aum_aemmika19`), and the top two are the same, in the same order.
+- **Known collaborators still rank at chance** (4 vs 4.21). As above, "hired by the brand" mixes
+  beauty specialists with lifestyle creators bought for reach, so this proxy cannot reward fit alone.

@@ -1,0 +1,79 @@
+{
+  "brand": "Srichand",
+  "profile_hash": "df56c2fabcec40a9",
+  "objective": "engagement",
+  "k": 10,
+  "queries": [
+    "แป้งคุมมัน",
+    "รีวิวรองพื้น",
+    "แต่งหน้าเซเว่น",
+    "drugstore makeup thailand",
+    "#รีวิวเครื่องสำอาง",
+    "#แต่งหน้า"
+  ],
+  "excluded_queries": [],
+  "ground_truth": 38,
+  "discovered": 123,
+  "evaluated": 19,
+  "gt_discovered": [
+    "echopwt"
+  ],
+  "gt_ranked": [
+    "echopwt",
+    "darayammy",
+    "beam.ntkd",
+    "hongshihoshi",
+    "aunreeyaa",
+    "flukegary",
+    "honey.cheepao",
+    "iamnaanah"
+  ],
+  "gt_ranks": [
+    5,
+    7,
+    8,
+    9,
+    12,
+    15,
+    18,
+    19
+  ],
+  "seeded": [
+    "aunreeyaa",
+    "beam.ntkd",
+    "darayammy",
+    "echopwt",
+    "flukegary",
+    "honey.cheepao",
+    "hongshihoshi",
+    "iamnaanah"
+  ],
+  "top_k": [
+    "amnotmyhair",
+    "ceo.kalmandkind",
+    "superthankky168",
+    "timyroutine",
+    "echopwt",
+    "amykitiya",
+    "darayammy",
+    "beam.ntkd",
+    "hongshihoshi",
+    "aum_aemmika19"
+  ],
+  "hits": [
+    "echopwt",
+    "darayammy",
+    "beam.ntkd",
+    "hongshihoshi"
+  ],
+  "recall_at_k": 0.1053,
+  "discovery_order_hits": 0,
+  "random_hits": 4.21,
+  "seconds": 47.3,
+  "apify_runs": 2,
+  "apify_items": 191,
+  "est_cost_usd": 0.709,
+  "errors": {
+    "mars.tinn_makeup101": "No videos returned (private, banned, or nonexistent account)"
+  }
+}
