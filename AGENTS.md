@@ -5,15 +5,13 @@ An MCP server that lets any AI client (Claude, ChatGPT, Gemini, or any other MCP
 > **Positioning:** this server is the bridge between AI clients and TikTok influencers/KOLs.
 > The AI client does the reasoning. The server does the measurement.
 
-Built for the Convert Cake AI Engineer assessment.
-
 **Demo video:** _Loom link (TBD)_
 
 ---
 
 ## Overview
 
-Convert Cake's influencer marketing team needs a faster way to match clients with relevant TikTok creators in Thailand. This project covers the four requirements of the brief:
+Influencer marketing teams need a faster way to match clients with relevant TikTok creators in Thailand. The project covers four requirements:
 
 | Requirement | How it is covered |
 |---|---|
@@ -28,7 +26,7 @@ A **KOL (Key Opinion Leader)** is a creator with recognized expertise in a field
 
 ```mermaid
 flowchart TD
-    U[Convert Cake influencer team] --> C[AI client<br/>Claude, ChatGPT, Gemini]
+    U[Influencer marketing team] --> C[AI client<br/>Claude, ChatGPT, Gemini]
     C -->|MCP| S[MCP server<br/>5 stateless tools]
     S --> E[Core engine<br/>discover, enrich, score]
     E --> A[Apify<br/>TikTok and Facebook scrapers]
