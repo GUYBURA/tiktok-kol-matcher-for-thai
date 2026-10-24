@@ -79,9 +79,9 @@ Findings:
   random; their ranks 4, 6, 10, 20, 21, 24, 25, 27). Every creator in the pool is already a beauty
   creator, and clip-to-theme similarity is flat across it (top-3 mean 0.49-0.59 for everyone), so
   relevance barely moves the order and performance decides it.
-- **The proxy rewards what brands buy, not only fit.** Five of the eight collaborators post mostly
-  sponsored clips (sponsored ratio 0.70-0.73) with low engagement per view (1-2%), which the
-  credibility and performance scores penalise by design. "Who the brand hired" is not the same as
+- **The proxy rewards what brands buy, not only fit.** Three of the eight collaborators post mostly
+  sponsored clips (sponsored ratio 0.70-0.73), and five have engagement under 3% per view, which
+  the credibility and performance scores penalise by design. "Who the brand hired" is not the same as
   "who fits best", so a low score here is partly the intended authenticity check.
 - **Off-topic large creators rank high** (a comedy account at 8, a travel account at 12) on
   performance alone. A minimum relevance gate before ranking would remove them.
