@@ -199,3 +199,26 @@ checked. Recall@10 0/38. Ranked list: `evals/results/baseline_2.txt`.
 - Two single-video figures appeared in both rounds (`amnotmyhair` 932K views, `tnimptrsn` 553-554K
   views), so they are probably real older clips rather than invented. Treat round 1's "not found"
   as unverifiable, not wrong. The three wrong like rates in round 1 stand.
+
+### Baseline round 3, and 3-run comparison
+
+Round 3: ~3 min, $1.15, 3 actor runs (latest 7 videos for 12 profiles). Recall@10 0/38.
+Fact-check (latest 10 clips, or 30 where cached): followers 10/10 right; of 17 other figures, 9 right,
+4 partly (like-rate ranges whose low end is too high, e.g. `runglawun_12` "7-18%", measured 1.1-18.2%),
+0 wrong, 4 not found (e.g. `runglawun_12` "8.5M-play hit", largest in its latest 10 is 1.1M).
+
+| 3 fresh runs | Top-10 overlap per pair | In all 3 top 10s | Time | Cost per run |
+|---|---|---|---|---|
+| This server v2 (default queries, pool 12) | 4, 5, 5 (mean 4.7) | 3 | 101-155 s | $1.35 |
+| Claude + raw Apify | 5, 5, 8 (mean 6.0) | 5 | 3-4 min | $0.86-1.15 |
+
+- **The baseline was a little more consistent across fresh runs.** Both see the same shifting search
+  results, but Claude chooses whom to check by reading the clips, which converges on the obvious
+  fits, while this server evaluates the first 12 candidates in search order (queries matched, then
+  followers), which shifts with the results. Choosing the pool by caption relevance (embeddings of
+  the search clips, no extra scraping) is the next fix to try.
+- **Overlap between the two setups:** 4 creators are in this server's run-1 top 10 and in at least
+  two baseline top 10s (`amnotmyhair`, `ceo.kalmandkind`, `amykitiya`, `aum_aemmika19`).
+- **Baseline figures across 3 rounds:** followers 30/30 right; other figures 24 right, 7 partly,
+  3 wrong (round 1 like rates), 12 not verifiable from recent clips. Its weak spots are like-rate
+  ranges and single-video claims; this server's figures are computed, not reported.
