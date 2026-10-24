@@ -88,3 +88,18 @@ Findings:
 
 Eight seeded creators in a pool of 27 is too small to tune weights on without overfitting; treat
 these numbers as a diagnosis, not a benchmark.
+
+### Baseline: Claude + raw Apify tools (one run)
+
+Same brief, brand name withheld, Apify's MCP server only. 3 actor runs (6 searches, 6 recent videos
+for 14 creators), ~4 minutes, $1.02. Ranked list: `evals/results/baseline_1.txt`.
+
+- **Recall@10: 0/38**, same as this server. With search finding almost none of the ground truth,
+  the backtest cannot tell the two apart.
+- **3 creators in common** with this server's top 10, including the same #1 (`amnotmyhair`).
+- **All 10 baseline picks are on-topic beauty creators**; this server's top 10 had two off-topic
+  accounts ranked on performance. The client reading captions judged relevance better than
+  embedding similarity on short captions, which supports a minimum relevance gate.
+- The baseline was cheaper ($1.02 vs $3.35) because it sampled 6 videos per creator instead of 30.
+  It is also not reproducible: no fixed scores, and three creators were ranked from search results
+  without checking their profiles.

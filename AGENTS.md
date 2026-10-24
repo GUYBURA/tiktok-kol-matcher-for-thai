@@ -257,11 +257,13 @@ There is no labelled ground truth for "good matches", so the project uses two me
 - **Baseline comparison:** run the same brief with an AI client connected only to raw Apify tools, then compare recall@K, consistency across three runs, time, and cost.
 - **Query-source experiment:** compare default profile queries with AI-proposed queries, using three runs to measure variance.
 
-| Setup | Recall@20 | Consistency (3 runs) | Time | Cost |
-|---|---|---|---|---|
-| This server, default queries | TBD | TBD | TBD | TBD |
-| This server, AI-proposed queries | TBD | TBD | TBD | TBD |
-| AI client + raw Apify tools | TBD | TBD | TBD | TBD |
+First run, Srichand (38 known collaborators, K = 10, pool 20). Details in `evals/README.md`.
+
+| Setup | Recall@10 | Off-topic creators in top 10 | Consistency (3 runs) | Time | Cost |
+|---|---|---|---|---|---|
+| This server, default queries | 0.00 (0/38) | 2 (comedy, travel) | Deterministic on cache | ~18 s cached; cold not measured | $3.35 |
+| This server, AI-proposed queries | TBD | TBD | TBD | TBD | TBD |
+| AI client + raw Apify tools (Claude) | 0.00 (0/38) | 0 | 1 run only (budget) | ~4 min | $1.02 |
 
 ## Ethics and privacy
 
