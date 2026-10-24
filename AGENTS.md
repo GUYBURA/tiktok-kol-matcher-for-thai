@@ -5,8 +5,6 @@ An MCP server that lets any AI client (Claude, ChatGPT, Gemini, or any other MCP
 > **Positioning:** this server is the bridge between AI clients and TikTok influencers/KOLs.
 > The AI client does the reasoning. The server does the measurement.
 
-**Demo video:** _Loom link (TBD)_
-
 ---
 
 ## Overview

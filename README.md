@@ -5,8 +5,6 @@ An MCP server that lets any AI client (Claude, ChatGPT, Gemini, or any other MCP
 The AI client summarizes the brand, proposes searches, and judges fit. The server collects the data
 and computes the scores.
 
-Demo video: _Loom link (TBD)_
-
 ## Overview
 
 Influencer marketing teams need a faster way to match clients with relevant TikTok creators in Thailand. The project covers four requirements:
