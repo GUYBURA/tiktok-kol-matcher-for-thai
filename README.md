@@ -2,14 +2,12 @@
 
 An MCP server that lets any AI client (Claude, ChatGPT, Gemini, or any other MCP-compatible assistant) find and evaluate Thai TikTok creators and KOLs for a brand, starting from the brand's Facebook page and website.
 
-> **Positioning:** this server is the bridge between AI clients and TikTok influencers/KOLs.
-> The AI client does the reasoning. The server does the measurement.
+The AI client summarizes the brand, proposes searches, and judges fit. The server collects the data
+and computes the scores.
 
 Built for the Convert Cake AI Engineer assessment.
 
-**Demo video:** _Loom link (TBD)_
-
----
+Demo video: _Loom link (TBD)_
 
 ## Overview
 
@@ -22,7 +20,7 @@ Convert Cake's influencer marketing team needs a faster way to match clients wit
 | 3. Rank by relevance, engagement, and audience | A deterministic weighted score built from relevance, performance, audience (inferred), and credibility, weighted by the campaign objective. |
 | 4. Present a curated list with profile information | Ranked results with TikTok profile links, metrics, score breakdowns, evidence clips, and flags. `save_shortlist` exports a CSV. |
 
-A **KOL (Key Opinion Leader)** is a creator with recognized expertise in a field, such as a dermatologist recommending skincare, whose recommendations carry more weight with their audience. The matcher detects self-declared expertise and flags it for verification.
+A KOL (Key Opinion Leader) is a creator with recognized expertise in a field, such as a dermatologist recommending skincare, whose recommendations carry more weight with their audience. The matcher detects self-declared expertise and flags it for verification.
 
 ## How it works
 
@@ -67,7 +65,7 @@ The server enforces everything that must stay consistent: data collection, Thai-
 | `save_shortlist` | `profile`, `handles[]`, `objective`, `notes?` | A CSV built from server data. The selection is written to the shortlist log. |
 
 - `handles` are TikTok usernames.
-- Every tool is **stateless**. The AI client passes the `BrandProfile` on each call, and tools return a `profile_hash` so changes between calls can be detected.
+- Every tool is stateless. The AI client passes the `BrandProfile` on each call, and tools return a `profile_hash` so changes between calls can be detected.
 - `save_shortlist` recomputes metrics from the cache instead of accepting numbers from the AI client, so exported figures always come from the server.
 
 ### `BrandProfile` example
@@ -116,18 +114,20 @@ The final score is a weighted sum. Weights depend on the campaign objective:
 
 These are initial weights, tuned with the backtest in `evals/`.
 
-**Relevance gate:** creators with relevance below 0.25 rank after every on-topic creator, whatever their total, and carry a `low_relevance` flag. Without it, large off-topic accounts (comedy, travel) reached the top 10 on performance alone. Each creator is measured on their 10 most recent clips.
+Creators with relevance below 0.25 rank after every on-topic creator, whatever their total, and carry a `low_relevance` flag. Without it, large off-topic accounts (comedy, travel) reached the top 10 on performance alone. Each creator is measured on their 10 most recent clips.
 
-**Tiers:** nano (<10K followers), micro (10K-100K), mid (100K-500K), macro (500K-1M), mega (1M+). Both scored performance metrics are ratios (per impression, per follower), so micro creators are not buried by mega creators' raw view counts.
+Tiers are nano (<10K followers), micro (10K-100K), mid (100K-500K), macro (500K-1M), mega (1M+). Both scored performance metrics are ratios (per impression, per follower), so micro creators are not buried by mega creators' raw view counts.
 
-**Flags** are shown for human review and are not part of the score:
+Flags are shown for human review and are not part of the score:
 
-- **Inactive:** no posts in the last 60 days. This is also a hard filter.
-- **Brand safety:** risky keywords in captions or bio, such as online gambling terms.
-- **Competitor mention:** recent captions mention a brand listed in `competitors`.
-- **Self-declared expertise:** professional titles in the bio (e.g. นพ., พญ., ภก., Dr.), labelled *unverified*.
-- **High sponsored ratio:** a large share of recent posts are ads.
-- **Low relevance:** few clips match the brand themes; ranked after on-topic creators (see the relevance gate).
+- `inactive`: no posts in the last 60 days. This is also a hard filter.
+- `brand_safety`: risky keywords in captions or bio, such as online gambling terms.
+- `competitor_mention`: recent captions mention a brand listed in `competitors`.
+- `self_declared_expertise`: professional titles in the bio (e.g. นพ., พญ., ภก., Dr.), labelled *unverified*.
+- `high_sponsored_ratio`: a large share of recent posts are ads.
+- `shop_account`: the bio or handle reads like a store, not a creator.
+- `work_restriction`: the bio limits what work the creator takes, e.g. "ไม่รับรีวิวสกินแคร์".
+- `low_relevance`: few clips match the brand themes, so the creator ranks after on-topic creators.
 
 Each result includes a short rationale generated from templates over the computed features, for example: *"72% of clips match 'beginner running training'; engagement rate above 85% of micro creators."*
 
@@ -135,13 +135,13 @@ Audience demographics are not publicly available, so the audience score is a pro
 
 ## Design decisions
 
-- **The AI client reasons; the server measures.** The engine contains no LLM. Brand summarization and query ideation happen in the AI client, which keeps the server model-agnostic, free of LLM costs, and reproducible. The trade-off is that profile quality depends on the client's model. A strict schema, validation, and user confirmation mitigate this.
-- **Stateless tools.** Each tool works only from its inputs. This makes tools easy to test, makes backtests exactly repeatable with saved profiles, and lets a hosted server scale without session affinity.
-- **Deterministic ranking, no LLM judge.** Scores come from formulas, so the same inputs always produce the same ranking. Qualitative judgment happens in the AI client, where the user can see and question it.
-- **Cache-first, append-only snapshots.** Every external call is cached in DuckDB, which controls cost, enables offline demos, and builds a history for future growth tracking.
-- **No vector database.** Each evaluation compares a known pool of a few thousand clips, so a matrix multiplication is enough.
-- **A plain Python workflow, not an agent framework.** The pipeline is well defined, so it is written as ordinary code. Agentic behavior lives in the AI client, following the workflow-versus-agent distinction in Anthropic's *Building effective agents*.
-- **Why not just connect an AI client to Apify's MCP server?** Apify provides raw scraping. This server adds the domain layer: Thai-creator filtering, feature engineering, consistent scoring, caching, and budget control. The baseline comparison in `evals/` measures the difference.
+- The engine contains no LLM. Brand summarization and query ideation happen in the AI client, which keeps the server model-agnostic, free of LLM costs, and reproducible. The trade-off is that profile quality depends on the client's model. A strict schema, validation, and user confirmation mitigate this.
+- Each tool works only from its inputs. This makes tools easy to test, makes backtests exactly repeatable with saved profiles, and lets a hosted server scale without session affinity.
+- Scores come from formulas, not an LLM judge, so the same inputs always produce the same ranking. Qualitative judgment happens in the AI client, where the user can see and question it.
+- Every external call is cached in DuckDB as an append-only snapshot, which controls cost, enables offline demos, and builds a history for future growth tracking.
+- There is no vector database. Each evaluation compares a known pool of a few thousand clips, so a matrix multiplication is enough.
+- The pipeline is well defined, so it is ordinary Python code rather than an agent framework. Agentic behavior lives in the AI client, following the workflow-versus-agent distinction in Anthropic's *Building effective agents*.
+- An AI client could connect to Apify's MCP server directly, but Apify provides only raw scraping. This server adds the domain layer: Thai-creator filtering, feature engineering, consistent scoring, caching, and budget control. The baseline comparison in `evals/` measures the difference.
 
 ## Tech stack
 
@@ -291,9 +291,9 @@ Commands that scrape print an upper cost bound and ask before spending (`--yes` 
 
 There is no labelled ground truth for "good matches", so the project uses two measurable proxies.
 
-- **Backtest:** pick a Thai brand with past TikTok creator collaborations. The ground truth is the set of creators who posted sponsored content for that brand. The brand's name is excluded from search queries, and the metric is recall@K: how many of those creators appear in the top K.
-- **Baseline comparison:** run the same brief with an AI client connected only to raw Apify tools, then compare recall@K, consistency across three runs, time, and cost.
-- **Query-source experiment:** compare default profile queries with AI-proposed queries, using three runs to measure variance.
+- Backtest: pick a Thai brand with past TikTok creator collaborations. The ground truth is the set of creators who posted sponsored content for that brand. The brand's name is excluded from search queries, and the metric is recall@K: how many of those creators appear in the top K.
+- Baseline comparison: run the same brief with an AI client connected only to raw Apify tools, then compare recall@K, consistency across three runs, time, and cost.
+- Query-source experiment: compare default profile queries with AI-proposed queries, using three runs to measure variance.
 
 Srichand (Thai cosmetics, 38 known collaborators, K = 10). Full write-up in `evals/README.md`.
 
@@ -306,28 +306,28 @@ Srichand (Thai cosmetics, 38 known collaborators, K = 10). Full write-up in `eva
 
 What the evals showed:
 
-- **Recall@K with brand-mention ground truth measures search overlap, not fit.** Generic niche
-  queries found 1 of 38 collaborators in ~120 Thai beauty creators, for every setup.
-- **Scoring is deterministic; TikTok search is not.** The same data gives the same ranking; a fresh
-  scrape hours later returns a different half of the search results, so fresh top 10s share 4-5
-  creators. A larger pool (20 instead of 12) is the best stabiliser found.
-- **Figures are where this server wins.** Every number it returns is computed from stored scrapes.
-  The raw-Apify baseline reported followers correctly but got 3 like rates wrong and gave 12 figures
-  that could not be verified.
-- **Judging fit from captions is where the client wins.** Claude reading clips kept off-topic
-  creators out better than embedding similarity on short captions; the relevance gate narrows this.
+- With brand-mention ground truth, recall@K mostly measures whether search happened to reach the
+  brand's collaborators. Generic niche queries found 1 of 38 collaborators among ~120 Thai beauty
+  creators, for every setup.
+- The same data always gives the same ranking, but TikTok search does not repeat itself. A fresh
+  scrape hours later returns a different half of the results, so fresh top 10s share 4-5 creators.
+  A larger pool (20 instead of 12) steadied it most.
+- Every number this server returns is computed from stored scrapes. The raw-Apify baseline reported
+  followers correctly but got 3 like rates wrong and gave 12 figures that could not be verified.
+- Claude reading the clips kept off-topic creators out better than embedding similarity on short
+  captions. The relevance gate narrows the gap.
 
 ## Ethics and privacy
 
-- **Public data only.** No logged-in scraping and no private data.
-- **Data minimization (Thailand PDPA).** Public creator data is still personal data. The project stores only the fields it uses, applies a retention period, and supports deletion on request.
-- **Commenter privacy.** Only aggregated comment statistics are stored. Commenter identities are never saved.
-- **Honest labelling.** Every metric is marked `measured` or `inferred`. No sensitive attributes, such as age, gender, religion, or health, are inferred about any individual.
-- **Prompt-injection resistance.** Scraped text (bios, captions, comments, website copy) is returned in clearly separated fields. Hard filters and scores are computed deterministically and cannot be changed by text in that content.
-- **Fairness across tiers.** Performance uses ratios (per impression, per follower), not raw counts, so smaller creators are not buried by large accounts.
-- **Human decision.** The tool recommends and explains; the influencer team makes the final choice.
-- **Cost guardrails.** Per-call limits and cache-first access prevent runaway scraping costs from AI agents.
-- **Platform terms.** Third-party scraping carries terms-of-service risk. TikTok's Research API is restricted to non-commercial academic research. The production path is an official partner integration, such as the TikTok Creator Marketplace API, which also provides first-party audience demographics.
+- Only public data is used: no logged-in scraping and no private data.
+- Public creator data is still personal data under Thailand's PDPA. The project stores only the fields it uses, applies a retention period, and supports deletion on request.
+- Only aggregated comment statistics are stored. Commenter identities are never saved.
+- Every metric is marked `measured` or `inferred`. No sensitive attributes, such as age, gender, religion, or health, are inferred about any individual.
+- Scraped text (bios, captions, comments, website copy) is returned in separate fields, which limits prompt injection. Hard filters and scores are computed deterministically and cannot be changed by text in that content.
+- Performance uses ratios (per impression, per follower), not raw counts, so smaller creators are not buried by large accounts.
+- The tool recommends and explains; the influencer team makes the final choice.
+- Per-call limits and cache-first access keep an AI agent from running up scraping costs.
+- Third-party scraping carries terms-of-service risk. TikTok's Research API is restricted to non-commercial academic research. The production path is an official partner integration, such as the TikTok Creator Marketplace API, which also provides first-party audience demographics.
 
 ## Limitations
 
@@ -359,10 +359,10 @@ What the evals showed:
 
 ## Business impact
 
-- **Speed:** a first shortlist in minutes instead of hours of manual browsing, so account teams can bring creator options to the first client meeting.
-- **Consistency:** the same scoring for every client and every team member, with evidence attached to each recommendation.
-- **Compounding value:** each search grows the creator cache, and each saved shortlist becomes feedback data that improves future rankings.
-- **Distribution:** customers connect their own AI client (Claude, ChatGPT, or Gemini). This supports a subscription with usage-based quotas, since the main variable cost is data collection.
+- A first shortlist takes minutes instead of hours of manual browsing, so account teams can bring creator options to the first client meeting.
+- Every client and team member gets the same scoring, with evidence attached to each recommendation.
+- Each search grows the creator cache, and each saved shortlist is feedback data for future rankings.
+- Customers connect their own AI client (Claude, ChatGPT, or Gemini). Since the main variable cost is data collection, this fits a subscription with usage-based quotas.
 
 ## Project structure
 
