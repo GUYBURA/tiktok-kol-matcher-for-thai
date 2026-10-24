@@ -100,6 +100,6 @@ for 14 creators), ~4 minutes, $1.02. Ranked list: `evals/results/baseline_1.txt`
 - **All 10 baseline picks are on-topic beauty creators**; this server's top 10 had two off-topic
   accounts ranked on performance. The client reading captions judged relevance better than
   embedding similarity on short captions, which supports a minimum relevance gate.
-- The baseline was cheaper ($1.02 vs $3.35) because it sampled 6 videos per creator instead of 30.
+- The baseline was cheaper ($1.02 vs $2.90; the other $0.45 of the $3.35 was the ground-truth search) because it sampled 6 videos per creator instead of 30.
   It is also not reproducible: no fixed scores, and three creators were ranked from search results
   without checking their profiles.

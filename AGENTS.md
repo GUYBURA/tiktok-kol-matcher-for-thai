@@ -261,7 +261,7 @@ First run, Srichand (38 known collaborators, K = 10, pool 20). Details in `evals
 
 | Setup | Recall@10 | Off-topic creators in top 10 | Consistency (3 runs) | Time | Cost |
 |---|---|---|---|---|---|
-| This server, default queries | 0.00 (0/38) | 2 (comedy, travel) | Deterministic on cache | ~18 s cached; cold not measured | $3.35 |
+| This server, default queries | 0.00 (0/38) | 2 (comedy, travel) | Deterministic on cache | ~18 s cached; cold not measured | $2.90 |
 | This server, AI-proposed queries | TBD | TBD | TBD | TBD | TBD |
 | AI client + raw Apify tools (Claude) | 0.00 (0/38) | 0 | 1 run only (budget) | ~4 min | $1.02 |
 
