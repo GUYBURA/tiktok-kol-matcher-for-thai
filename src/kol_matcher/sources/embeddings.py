@@ -78,11 +78,18 @@ def _clean(text: str) -> str:
 
 
 def _ollama_embed(settings, texts: list[str]) -> list[list[float]]:
-    resp = httpx.post(
-        f"{settings.ollama_base_url}/api/embed",
-        json={"model": settings.embedding_model, "input": texts},
-        timeout=120,
-    )
+    try:
+        resp = httpx.post(
+            f"{settings.ollama_base_url}/api/embed",
+            json={"model": settings.embedding_model, "input": texts},
+            timeout=120,
+        )
+    except httpx.ConnectError as e:
+        raise RuntimeError(f"Cannot reach Ollama at {settings.ollama_base_url}. Start Ollama, then retry "
+                           f"(relevance scoring needs the {settings.embedding_model} model).") from e
+    if resp.status_code == 404:
+        raise RuntimeError(f"Ollama has no model {settings.embedding_model}. "
+                           f"Run: ollama pull {settings.embedding_model}")
     resp.raise_for_status()
     vectors = resp.json()["embeddings"]
     if len(vectors) != len(texts):

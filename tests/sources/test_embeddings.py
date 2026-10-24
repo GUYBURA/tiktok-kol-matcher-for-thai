@@ -124,6 +124,21 @@ def test_all_texts_failing_raises(con, nan_ollama):
 
 def test_other_http_errors_still_raise(con, monkeypatch):
     monkeypatch.setattr(embeddings.httpx, "post", lambda url, json, **_: httpx.Response(
-        404, json={"error": "model not found"}, request=httpx.Request("POST", url)))
+        503, json={"error": "busy"}, request=httpx.Request("POST", url)))
     with pytest.raises(httpx.HTTPStatusError):
+        embed(con, settings(), ["ok"])
+
+
+def test_missing_model_says_how_to_pull(con, monkeypatch):
+    monkeypatch.setattr(embeddings.httpx, "post", lambda url, json, **_: httpx.Response(
+        404, json={"error": "model not found"}, request=httpx.Request("POST", url)))
+    with pytest.raises(RuntimeError, match="ollama pull bge-m3"):
+        embed(con, settings(), ["ok"])
+
+
+def test_ollama_not_running_says_start_it(con, monkeypatch):
+    def refuse(url, json, **_):
+        raise httpx.ConnectError("connection refused")
+    monkeypatch.setattr(embeddings.httpx, "post", refuse)
+    with pytest.raises(RuntimeError, match="Start Ollama"):
         embed(con, settings(), ["ok"])
