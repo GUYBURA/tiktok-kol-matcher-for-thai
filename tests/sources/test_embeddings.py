@@ -88,3 +88,42 @@ def test_replay_serves_cache_and_misses_raise(con, fake_ollama):
 def test_unknown_provider_rejected(con, fake_ollama):
     with pytest.raises(ValueError):
         embed(con, settings(provider="openai"), ["x"])
+
+
+@pytest.fixture
+def nan_ollama(monkeypatch):
+    """Like Ollama's bge-m3: a 500 for the whole request if any input contains a NaN trigger."""
+    calls = []
+
+    def post(url, json, **_kwargs):
+        calls.append(json["input"])
+        request = httpx.Request("POST", url)
+        if any("\n.\n" in t or "BROKEN" in t for t in json["input"]):
+            return httpx.Response(500, json={"error": "json: unsupported value: NaN"}, request=request)
+        return httpx.Response(200, json={"embeddings": [[float(len(t)), 1.0, 0.0] for t in json["input"]]},
+                              request=request)
+
+    monkeypatch.setattr(embeddings.httpx, "post", post)
+    return calls
+
+
+def test_nan_text_does_not_fail_the_batch(con, nan_ollama):
+    vectors = embed(con, settings(), ["ok", "สวย \n.\n.\n#แต่งหน้า", "BROKEN"])
+    assert vectors.shape == (3, 3)
+    assert np.allclose(np.linalg.norm(vectors[:2], axis=1), 1.0)
+    assert not vectors[2].any()                               # cannot embed even cleaned: zero row
+    assert "สวย #แต่งหน้า" in [t for call in nan_ollama for t in call]   # retried cleaned
+    cached = con.execute("SELECT count(*) FROM embeddings").fetchone()[0]
+    assert cached == 2                                         # zero row is not cached
+
+
+def test_all_texts_failing_raises(con, nan_ollama):
+    with pytest.raises(RuntimeError, match="could not embed"):
+        embed(con, settings(), ["BROKEN"])
+
+
+def test_other_http_errors_still_raise(con, monkeypatch):
+    monkeypatch.setattr(embeddings.httpx, "post", lambda url, json, **_: httpx.Response(
+        404, json={"error": "model not found"}, request=httpx.Request("POST", url)))
+    with pytest.raises(httpx.HTTPStatusError):
+        embed(con, settings(), ["ok"])
