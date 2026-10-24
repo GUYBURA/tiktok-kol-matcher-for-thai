@@ -108,14 +108,37 @@ for 14 creators), ~4 minutes, $1.02. Ranked list: `evals/results/baseline_1.txt`
 
 | Run | Ranked | Hits@10: ranker / random | Off-topic in top 10 | Apify |
 |---|---|---|---|---|
-| Default queries, pool 12 | 11 | 0 / 0 | 0 above on-topic creators (2 gated ones fill ranks 9-10 because only 11 were ranked) | $0 (cached; ~$0.45 cold) |
+| Default queries, pool 12 | 11 | 0 / 0 | 5 gated (`low_relevance`) fill ranks 6-10, because only 6 of 11 passed the gate; 3 of them are beauty creators | $0 (cached; ~$0.45 cold) |
 | Same + 8 seeded ground truth | 19 | 4 / 4.21 | 0 | $0.71 |
 
 - **Cost:** 20 profiles cost $0.71 at 10 clips vs $2.00 at 30. A full cold run of this backtest
   (6 searches + 12 profiles) is now ~$1.35, close to the raw-Apify baseline ($1.02).
-- **Off-topic:** gated creators (comedy, family vlog) now rank after every on-topic creator and
-  carry a `low_relevance` flag.
+- **Off-topic:** gated creators now rank after every on-topic creator and carry a `low_relevance`
+  flag. With 10 clips the gate also catches some beauty creators whose recent captions are short or
+  hashtag-only (false positives), so the flag means "check the clips", not "off-topic".
 - **Agreement with the baseline:** 4 of its top 10 are in ours (`amnotmyhair`, `ceo.kalmandkind`,
   `amykitiya`, `aum_aemmika19`), and the top two are the same, in the same order.
 - **Known collaborators still rank at chance** (4 vs 4.21). As above, "hired by the brand" mixes
   beauty specialists with lifestyle creators bought for reach, so this proxy cannot reward fit alone.
+
+### AI-proposed queries (one fresh Claude chat, brief only)
+
+Queries: `ราคาถูก เครื่องสำอางเซเว่น แต่งหน้าง่ายๆ`, `รีวิวแป้งฝุ่นคุมมัน รองพื้นคุมมัน`,
+`#เครื่องสำอางราคาประหยัด`, `สกินแคร์ผิวมัน อากาศร้อน`, `แต่งหน้าไปเรียน ไปทำงาน มือใหม่`,
+`#รีวิวเครื่องสำอางดรักสโตร์`. Same settings as v2 (10 clips, gate 0.25, pool 12, K 10).
+
+| Queries | Thai creators found | Ground truth found | Recall@10 | Gated in top 10 | Mean relevance, top 10 | Time (cold) | Apify |
+|---|---|---|---|---|---|---|---|
+| Profile defaults | 123 | 1 | 0/38 | 5 | 0.29 | not measured | ~$1.35 cold |
+| AI-proposed | 141 | 1 (same: `echopwt`) | 0/38 | 3 | 0.36 | 116 s | $1.27 |
+
+- **AI queries did not reach more collaborators.** Different queries, same single hit: the 38 are a
+  thin slice of Thai beauty TikTok, and 6 generic queries are unlikely to land on them.
+- **They gave a more on-topic pool** (7 of 11 pass the gate vs 6; mean relevance 0.36 vs 0.29), but
+  long multi-phrase queries also pulled lifestyle accounts (travel, food).
+- **Little overlap:** 1 creator in common with the default-query top 10, none with the baseline. The
+  query source changes who is found far more than ranking changes the order.
+
+Conclusion for this proxy: with brand-mention ground truth, recall@K measures search overlap and is
+near zero for every setup tried (this server with either query source, and Claude with raw Apify).
+A useful next eval needs either many more queries per brand or a labelled pool (people rating fit).
