@@ -5,13 +5,11 @@ An MCP server that lets any AI client (Claude, ChatGPT, Gemini, or any other MCP
 The AI client summarizes the brand, proposes searches, and judges fit. The server collects the data
 and computes the scores.
 
-Built for the Convert Cake AI Engineer assessment.
-
 Demo video: _Loom link (TBD)_
 
 ## Overview
 
-Convert Cake's influencer marketing team needs a faster way to match clients with relevant TikTok creators in Thailand. This project covers the four requirements of the brief:
+Influencer marketing teams need a faster way to match clients with relevant TikTok creators in Thailand. The project covers four requirements:
 
 | Requirement | How it is covered |
 |---|---|
@@ -24,18 +22,7 @@ A KOL (Key Opinion Leader) is a creator with recognized expertise in a field, su
 
 ## How it works
 
-```mermaid
-flowchart TD
-    U[Convert Cake influencer team] --> C[AI client<br/>Claude, ChatGPT, Gemini]
-    C -->|MCP| S[MCP server<br/>5 stateless tools]
-    S --> E[Core engine<br/>discover, enrich, score]
-    E --> A[Apify<br/>TikTok and Facebook scrapers]
-    E --> W[Website text fetcher]
-    E --> M[Embedding model<br/>BGE-M3]
-    E --> D[(DuckDB cache)]
-```
-
-<!-- Full diagram: export the draw.io file to docs/architecture.png and link it here. -->
+![TikTok KOL Matcher architecture](docs/tiktok_kol_matcher_th.drawio.svg)
 
 ### Workflow
 
