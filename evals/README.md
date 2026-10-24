@@ -184,3 +184,18 @@ baseline said it used), scraped a few hours after the baseline run. Like rate = 
   their profiles. Sponsored-content and competitor claims all held up.
 - This server does not produce such claims: every figure it returns is computed from stored
   scrapes, and `save_shortlist` recomputes them.
+
+### Baseline consistency and fact-check, round 2
+
+Second fresh Claude + raw Apify chat, same prompt: ~4 min, $0.86, 4 actor runs, 21 profiles
+checked. Recall@10 0/38. Ranked list: `evals/results/baseline_2.txt`.
+
+- **5 of 10 shared with round 1** (`amnotmyhair`, `amykitiya`, `aum_aemmika19`, `ceo.kalmandkind`,
+  `tnimptrsn`), about the same as this server across fresh scrapes (4-5 of 10). Both inherit
+  TikTok's changing search results.
+- **Fact-check** (latest 10 clips, or 30 where cached): followers 10/10 right; of 12 other figures,
+  5 right (e.g. `beamsareeda` 402K views and ~12K saves, exact), 2 partly, 0 wrong, 5 not found.
+  This round said it relied on older videos, which is why more figures fall outside the latest clips.
+- Two single-video figures appeared in both rounds (`amnotmyhair` 932K views, `tnimptrsn` 553-554K
+  views), so they are probably real older clips rather than invented. Treat round 1's "not found"
+  as unverifiable, not wrong. The three wrong like rates in round 1 stand.
