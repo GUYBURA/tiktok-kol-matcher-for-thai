@@ -171,8 +171,8 @@ Audience demographics are not publicly available, so the audience score is a pro
 ### Installation
 
 ```bash
-git clone <repository-url>
-cd tiktok-kol-matcher
+git clone https://github.com/GUYBURA/tiktok-kol-matcher-for-thai.git
+cd tiktok-kol-matcher-for-thai
 uv sync
 cp .env.example .env
 ```
@@ -182,15 +182,23 @@ cp .env.example .env
 Edit `.env`:
 
 ```dotenv
-APIFY_TOKEN=                      # required for live mode
+APIFY_TOKEN=                        # required for live mode
+APIFY_MAX_CONCURRENT_RUNS=4         # Apify memory cap: free plan 16 GB
+APIFY_RUN_MEMORY_MB=2048            # per run; 4 x 2 GB = 8 GB, min 1024
 CACHE_PATH=data/cache.duckdb
-REPLAY_MODE=false                 # true = serve fixtures only, no external calls
+REPLAY_MODE=false                   # true = serve fixtures only, no external calls
 EMBEDDING_PROVIDER=ollama
 OLLAMA_BASE_URL=http://localhost:11434
 EMBEDDING_MODEL=bge-m3
 MAX_RESULTS_PER_QUERY=30
-MAX_CREATORS_PER_EVALUATE=5
+MAX_CREATORS_PER_EVALUATE=5         # each creator is ~$0.04 of Apify on a cold cache
+CACHE_TTL_HOURS=24
+FIXTURES_PATH=fixtures              # replay data
+PYTHONUTF8=1
+SHORTLIST_DIR=data/shortlists       # CSV exports; keep under data/ (git-ignored)
 ```
+
+In live mode, start Ollama and pull the model once: `ollama pull bge-m3`.
 
 ### Connect to Claude Desktop
 
@@ -215,7 +223,15 @@ Add the server to `claude_desktop_config.json`:
 }
 ```
 
-Restart Claude Desktop. The five tools appear under the `kol-matcher` server.
+On Windows, Claude Desktop may not find `uv` on its `PATH`; use the full path as `command`, for
+example `C:\Users\<you>\.local\bin\uv.exe`.
+
+Quit Claude Desktop completely (including the tray icon) and reopen it. The five tools appear under
+the `kol-matcher` server. Quit and reopen it again after every code change. While it runs, it holds
+the lock on `data/cache.duckdb`, so use a separate `CACHE_PATH` for the CLI.
+
+Slow tools answer "still working" after `TOOL_WAIT_SECONDS` (45 s) because remote clients give up
+after about 60 s; the client calls again with the same arguments and gets the same job's result.
 
 For the recommended conversation flow, add `skills/kol-matcher/SKILL.md` as a skill in your AI client.
 
@@ -227,7 +243,19 @@ npx @modelcontextprotocol/inspector uv --directory . run kol-matcher-server
 
 ### Offline demo (no API keys)
 
-Set `REPLAY_MODE=true` in `.env`. The server and CLI then serve only the committed data in `fixtures/` and make no external calls.
+`fixtures/` holds one recorded brand, Srichand (Thai cosmetics): 6 searches, the recent clips of
+22 creators, and their embeddings. With `REPLAY_MODE=true` the server and CLI serve only this data,
+need no Apify token and no Ollama, and give the same ranking every run (the clock is set to the
+recording time, so scores do not drift as the data ages).
+
+```bash
+REPLAY_MODE=true uv run kol-matcher match --profile evals/profiles/srichand.json
+```
+
+In an AI client, start from the profile in `evals/profiles/srichand.json` (replay has no Facebook
+data for `analyze_brand`) and evaluate creators that the replayed search returns. A creator outside
+the fixtures is reported as missing, never scraped. To record another brand, run it live once, then
+`uv run kol-matcher export-fixtures --profile <profile.json>`.
 
 ## Usage
 
@@ -248,9 +276,16 @@ uv run kol-matcher analyze --facebook-url https://www.facebook.com/<page> --webs
 # Run the full pipeline with a saved profile (queries come from the profile's keywords)
 uv run kol-matcher match --profile fixtures/profiles/example.json --objective engagement --out shortlist.csv
 
-# Backtest against known past collaborations
-uv run kol-matcher backtest --profile fixtures/profiles/example.json --ground-truth evals/ground_truth/example.csv --k 20
+# Evals (see evals/README.md): ground truth, backtest, scoring an outside list
+uv run kol-matcher ground-truth --brand-term Srichand --brand-term ศรีจันทร์ --out evals/ground_truth/srichand.csv
+uv run kol-matcher backtest --profile evals/profiles/srichand.json --ground-truth evals/ground_truth/srichand.csv --k 10 --pool 12
+uv run kol-matcher score-list --ground-truth evals/ground_truth/srichand.csv --handles evals/results/baseline_1.txt --k 10
+
+# Record replay fixtures for a profile from the live cache (no Apify calls)
+uv run kol-matcher export-fixtures --profile evals/profiles/srichand.json
 ```
+
+Commands that scrape print an upper cost bound and ask before spending (`--yes` skips the prompt).
 
 ## Evaluation
 
@@ -260,7 +295,7 @@ There is no labelled ground truth for "good matches", so the project uses two me
 - **Baseline comparison:** run the same brief with an AI client connected only to raw Apify tools, then compare recall@K, consistency across three runs, time, and cost.
 - **Query-source experiment:** compare default profile queries with AI-proposed queries, using three runs to measure variance.
 
-First run, Srichand (38 known collaborators, K = 10, pool 20). Details in `evals/README.md`.
+Srichand (Thai cosmetics, 38 known collaborators, K = 10). Full write-up in `evals/README.md`.
 
 | Setup | Recall@10 | Off-topic creators in top 10 | Consistency (3 runs) | Time | Cost |
 |---|---|---|---|---|---|
@@ -268,6 +303,19 @@ First run, Srichand (38 known collaborators, K = 10, pool 20). Details in `evals
 | This server v2 (10 clips, relevance gate, pool 12) | 0.00 (0/38) | 5 flagged, ranked after on-topic | Same data: identical. Fresh scrapes: 4-5 of 10 shared (search changes) | <1 s cached; 101-155 s cold | $1.35 |
 | This server v2, AI-proposed queries | 0.00 (0/38) | 3 flagged, ranked after on-topic | 1 run only | 116 s cold | $1.27 |
 | AI client + raw Apify tools (Claude) | 0.00 (0/38) | 0 | Fresh runs: 5-8 of 10 shared; 3 wrong and 12 unverifiable figures of 46 | 3-4 min | $0.86-1.15 |
+
+What the evals showed:
+
+- **Recall@K with brand-mention ground truth measures search overlap, not fit.** Generic niche
+  queries found 1 of 38 collaborators in ~120 Thai beauty creators, for every setup.
+- **Scoring is deterministic; TikTok search is not.** The same data gives the same ranking; a fresh
+  scrape hours later returns a different half of the search results, so fresh top 10s share 4-5
+  creators. A larger pool (20 instead of 12) is the best stabiliser found.
+- **Figures are where this server wins.** Every number it returns is computed from stored scrapes.
+  The raw-Apify baseline reported followers correctly but got 3 like rates wrong and gave 12 figures
+  that could not be verified.
+- **Judging fit from captions is where the client wins.** Claude reading clips kept off-topic
+  creators out better than embedding similarity on short captions; the relevance gate narrows this.
 
 ## Ethics and privacy
 
@@ -288,6 +336,13 @@ First run, Srichand (38 known collaborators, K = 10, pool 20). Details in `evals
 - Scrapers can break when TikTok changes its site. Pinned actor builds and replay mode reduce demo risk.
 - Cached metrics go stale; each row records `scraped_at`, and refresh intervals are configurable.
 - Profile quality depends on the AI client's model.
+- TikTok search results change within hours, so fresh runs find different pools; cached runs are stable.
+- In some niches, broad keywords (e.g. "รีวิวกล้อง") mostly return shops and rental services; product
+  and model names find creators better.
+- Sponsored content is detected from TikTok's ad flags only; many Thai creators disclose with discount
+  codes or brand tags instead, so the sponsored ratio is a lower bound.
+- Live mode needs a local Ollama with `bge-m3`. Embedding similarity separates on-topic from
+  off-topic creators well, but is flat among creators of the same niche.
 - The ask-before-search confirmation step relies on the skill and the client's tool-approval prompts; the server cannot verify that a human confirmed.
 
 ## Roadmap
@@ -312,7 +367,7 @@ First run, Srichand (38 known collaborators, K = 10, pool 20). Details in `evals
 ## Project structure
 
 ```
-tiktok-kol-matcher/
+tiktok-kol-matcher-for-thai/
 ├── src/kol_matcher/
 │   ├── core/         # Matching engine (no MCP dependency)
 │   ├── schemas/      # Shared Pydantic contracts, including BrandProfile
@@ -324,7 +379,7 @@ tiktok-kol-matcher/
 │   └── cli.py        # CLI entry point
 ├── skills/           # SKILL.md describing the workflow for AI clients
 ├── evals/            # Backtest and baseline comparison
-├── fixtures/         # Committed demo data for offline replay
+├── fixtures/         # Committed demo data for offline replay (Srichand)
 ├── tests/            # Unit and contract tests (mirrors src/)
 ├── docs/             # Diagrams and design notes
 └── data/             # Local cache (git-ignored)

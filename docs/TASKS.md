@@ -77,9 +77,9 @@ Order follows dependencies. Each task has a "done when" check.
 
 ## Phase 8 — Tests + ship
 
-- [ ] **T8.1** Unit tests: scoring, Thai filter, flags, `profile_hash` (on fixtures)
-- [ ] **T8.2** Contract tests: tool I/O matches schemas
-- [ ] **T8.3** Claude Desktop config verified, demo video, README final
+- [x] **T8.1** Unit tests: scoring, Thai filter, flags, `profile_hash` (on fixtures)
+- [x] **T8.2** Contract tests: tool I/O matches schemas
+- [ ] **T8.3** Claude Desktop config verified, demo video, README final (config and README done; video pending)
 
 ## Scope cut (if time tight)
 
