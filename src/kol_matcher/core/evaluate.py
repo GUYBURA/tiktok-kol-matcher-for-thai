@@ -5,7 +5,7 @@ from kol_matcher.core.enrich import enrich
 from kol_matcher.core.features import comment_stats, evidence_clips, pool_features
 from kol_matcher.core.flags import content_flags
 from kol_matcher.core.rationale import rationale
-from kol_matcher.core.scoring import rank
+from kol_matcher.core.scoring import MIN_RELEVANCE, is_relevant, rank
 from kol_matcher.core.stored import cached_comment_stats
 from kol_matcher.schemas.brand import BrandProfile, profile_hash
 from kol_matcher.schemas.creator import (
@@ -16,7 +16,7 @@ from kol_matcher.schemas.creator import (
     EvidenceClip,
     InactiveCreator,
 )
-from kol_matcher.schemas.scoring import Objective
+from kol_matcher.schemas.scoring import Flag, FlagType, Objective
 from kol_matcher.sources import apify_scraper
 
 # Comments are the most expensive actor, so they are fetched only for conversion, and only for the
@@ -54,6 +54,10 @@ def evaluate(con, settings, profile: BrandProfile, handles: list[str],
     for i, (f, s) in enumerate(rank(features, objective), 1):
         e = by_handle[f.handle]
         flags = e.flags + content_flags(e, profile)
+        if not is_relevant(s):
+            flags.append(Flag(type=FlagType.low_relevance,
+                              detail=f"relevance {s.relevance.value:.2f} is below {MIN_RELEVANCE}: few clips "
+                                     f"match the brand themes, ranked after on-topic creators"))
         result.creators.append(EvaluatedCreator(
             rank=i, handle=f.handle, nickname=e.creator.nickname, bio=e.creator.bio,
             profile_url=e.creator.profile_url, tier=f.tier, followers=e.creator.followers,

@@ -140,7 +140,9 @@ def fetch_facebook_posts(con, settings, url: str) -> list[dict]:
 
 
 TIKTOK_ACTOR = "clockworks/tiktok-scraper"
-VIDEOS_PER_PROFILE = 30
+# 10 recent clips: the Srichand backtest ranked about as well with 10 as with 30 (evals/README.md),
+# and profile scrapes were ~70% of the cost.
+VIDEOS_PER_PROFILE = 10
 MAX_CAPTION_CHARS = 500
 TIKTOK_FIELDS = [
     "id", "text", "textLanguage", "createTimeISO", "webVideoUrl",

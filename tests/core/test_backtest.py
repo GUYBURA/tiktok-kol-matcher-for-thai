@@ -133,7 +133,7 @@ def test_run_backtest_rejects_only_brand_queries(con):
 def test_max_cost_upper_bound():
     s = Settings(_env_file=None, max_results_per_query=30)
     cost = bt.max_cost_usd(s, n_queries=5, pool=10)
-    assert cost == pytest.approx(5 * 30 * 0.005 + 10 * 30 * 0.0037 + 2 * 0.001, abs=0.01)
+    assert cost == pytest.approx(5 * 30 * 0.005 + 10 * apify_scraper.VIDEOS_PER_PROFILE * 0.0037 + 2 * 0.001, abs=0.01)
 
 
 def test_run_backtest_seed_adds_missed_ground_truth(con, monkeypatch, as_batch):

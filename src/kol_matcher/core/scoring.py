@@ -14,6 +14,12 @@ ANCHORS = {
 }
 
 
+# Relevance gate. Below this, a creator ranks after every on-topic creator whatever their reach:
+# without it, large off-topic accounts (comedy, travel) reached the top 10 on performance alone.
+# 0.25 removed all of them in the Srichand backtest; one small sample, so tune with more brands.
+MIN_RELEVANCE = 0.25
+
+
 def scale(value: float, zero_at: float, one_at: float) -> float:
     """Linear map: zero_at -> 0, one_at -> 1, clipped to [0, 1]. Works for decreasing scales too."""
     return min(1.0, max(0.0, (value - zero_at) / (one_at - zero_at)))
@@ -63,9 +69,14 @@ def score(f: CreatorFeatures, objective: Objective = Objective.engagement) -> Sc
 
 def rank(features: list[CreatorFeatures], objective: Objective = Objective.engagement
          ) -> list[tuple[CreatorFeatures, ScoreBreakdown]]:
-    """Highest total first; ties broken by handle so the order is always the same."""
+    """On-topic creators first (relevance >= MIN_RELEVANCE), then highest total; ties broken by
+    handle so the order is always the same. Totals are not changed by the gate."""
     scored = [(f, score(f, objective)) for f in features]
-    return sorted(scored, key=lambda pair: (-pair[1].total, pair[0].handle))
+    return sorted(scored, key=lambda pair: (not is_relevant(pair[1]), -pair[1].total, pair[0].handle))
+
+
+def is_relevant(s: ScoreBreakdown) -> bool:
+    return s.relevance.value >= MIN_RELEVANCE
 
 
 def _mean(*values: float) -> float:

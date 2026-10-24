@@ -145,7 +145,7 @@ def brand_queries(queries: list[str], brand_terms: list[str]) -> tuple[list[str]
     return kept, [q for q in queries if q not in kept]
 
 
-def run_backtest(con, settings, profile: BrandProfile, truth: list[str], k: int = 20, pool: int = 40,
+def run_backtest(con, settings, profile: BrandProfile, truth: list[str], k: int = 20, pool: int = 12,
                  objective: Objective = Objective.engagement, queries: list[str] | None = None,
                  brand_terms: list[str] | None = None, exclude_handles: list[str] | None = None,
                  seed: int = 0) -> BacktestResult:

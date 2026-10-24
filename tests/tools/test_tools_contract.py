@@ -127,6 +127,17 @@ def test_evaluate_creators_ranks_flags_and_explains():
 
 
 
+def test_evaluate_off_topic_creator_ranks_last_with_flag(monkeypatch):
+    # "joke" has far more likes, but its captions do not match the brand themes.
+    monkeypatch.setitem(PROFILES, "joke", [clip("joke", f"6{i}", likes=5_000, caption="ขำมาก555") for i in range(3)])
+    monkeypatch.setattr(embeddings, "embed", lambda c, s, texts: np.array(
+        [[0.0, 1.0] if "ขำ" in t else [1.0, 0.0] for t in texts]))
+    out = call("evaluate_creators", {"profile": PROFILE, "handles": ["joke", "mint"]}).structured_content
+    assert [c["handle"] for c in out["creators"]] == ["mint", "joke"]
+    joke = out["creators"][1]
+    assert any(f["type"] == "low_relevance" for f in joke["flags"])
+    assert not any(f["type"] == "low_relevance" for f in out["creators"][0]["flags"])
+
 def test_evaluate_returns_top_n_in_full_and_the_rest_as_handles():
     handles = ["mint", "bank", "inject", "plain"]
     out = call("evaluate_creators", {"profile": PROFILE, "handles": handles, "top_n": 2}).structured_content

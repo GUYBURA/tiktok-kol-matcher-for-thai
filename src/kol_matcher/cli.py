@@ -138,7 +138,7 @@ def backtest(
     profile: Annotated[Path, typer.Option(exists=True, dir_okay=False, help="BrandProfile JSON file")],
     ground_truth: Annotated[Path, typer.Option(exists=True, dir_okay=False, help="Ground-truth CSV")],
     k: Annotated[int, typer.Option(min=1, help="Recall@K cut-off")] = 20,
-    pool: Annotated[int, typer.Option(min=1, help="Discovered creators to evaluate and rank")] = 40,
+    pool: Annotated[int, typer.Option(min=1, help="Discovered creators to evaluate and rank")] = 12,
     objective: Annotated[Objective, typer.Option(help="Campaign goal; sets the score weights")] = Objective.engagement,
     query: Annotated[list[str] | None, typer.Option(help="Search query (repeatable). Default: the profile's "
                                                        "keywords and hashtags")] = None,

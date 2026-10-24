@@ -116,6 +116,8 @@ The final score is a weighted sum. Weights depend on the campaign objective:
 
 These are initial weights, tuned with the backtest in `evals/`.
 
+**Relevance gate:** creators with relevance below 0.25 rank after every on-topic creator, whatever their total, and carry a `low_relevance` flag. Without it, large off-topic accounts (comedy, travel) reached the top 10 on performance alone. Each creator is measured on their 10 most recent clips.
+
 **Tiers:** nano (<10K followers), micro (10K-100K), mid (100K-500K), macro (500K-1M), mega (1M+). Both scored performance metrics are ratios (per impression, per follower), so micro creators are not buried by mega creators' raw view counts.
 
 **Flags** are shown for human review and are not part of the score:
@@ -125,6 +127,7 @@ These are initial weights, tuned with the backtest in `evals/`.
 - **Competitor mention:** recent captions mention a brand listed in `competitors`.
 - **Self-declared expertise:** professional titles in the bio (e.g. นพ., พญ., ภก., Dr.), labelled *unverified*.
 - **High sponsored ratio:** a large share of recent posts are ads.
+- **Low relevance:** few clips match the brand themes; ranked after on-topic creators (see the relevance gate).
 
 Each result includes a short rationale generated from templates over the computed features, for example: *"72% of clips match 'beginner running training'; engagement rate above 85% of micro creators."*
 
